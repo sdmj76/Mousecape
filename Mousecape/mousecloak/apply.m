@@ -195,9 +195,31 @@ BOOL applyCape(NSDictionary *dictionary) {
 }
 
 BOOL applyCapeAtPath(NSString *path) {
-    NSDictionary *cape = [NSDictionary dictionaryWithContentsOfFile:path];
+    // Validate path
+    if (!path || path.length == 0) {
+        MMLog(BOLD RED "Invalid path" RESET);
+        return NO;
+    }
+
+    // Resolve symlinks and check for path traversal
+    NSString *realPath = [path stringByResolvingSymlinksInPath];
+    NSString *standardPath = [realPath stringByStandardizingPath];
+
+    // Validate file extension
+    if (![[standardPath pathExtension] isEqualToString:@"cape"]) {
+        MMLog(BOLD RED "Invalid file extension - must be .cape" RESET);
+        return NO;
+    }
+
+    // Check file exists and is readable
+    if (![[NSFileManager defaultManager] isReadableFileAtPath:standardPath]) {
+        MMLog(BOLD RED "File not readable at path" RESET);
+        return NO;
+    }
+
+    NSDictionary *cape = [NSDictionary dictionaryWithContentsOfFile:standardPath];
     if (cape)
         return applyCape(cape);
-    MMLog(BOLD RED "Could not find valid file at %s to apply" RESET, path.UTF8String);
+    MMLog(BOLD RED "Could not parse valid cape file" RESET);
     return NO;
 }

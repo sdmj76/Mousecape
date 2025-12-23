@@ -53,13 +53,18 @@ NSDictionary *createCapeFromDirectory(NSString *path) {
     [dictionary setObject:@(MCCursorParserVersion) forKey:MCCursorDictionaryMinimumVersionKey];
     
     CGFloat version = 0.0;
-    
+
     MMLog(BOLD "Enter metadata for cape:" RESET);
     NSString *author = MMGet(@"Author");
     NSString *identifier = MMGet(@"Identifier");
     NSString *name = MMGet(@"Cape Name");
     MMLog("Cape Version: ");
-    scanf("%lf", &version);
+    if (scanf("%lf", &version) != 1 || version < 0 || version > 1000) {
+        MMLog(BOLD RED "Invalid version number" RESET);
+        return nil;
+    }
+    // Clear input buffer
+    int c; while ((c = getchar()) != '\n' && c != EOF);
     NSString *hidpi = MMGet(@"HiDPI? (y/n)");
     
     MMLog("");
@@ -90,17 +95,35 @@ NSDictionary *createCapeFromDirectory(NSString *path) {
         CGFloat hotX, hotY, pW, pH, fD;
         printf(BOLD "Need metadata for %s." RESET, [ident cStringUsingEncoding:NSUTF8StringEncoding]);
         printf("X Hotspot: ");
-        scanf("%lf", &hotX);
+        if (scanf("%lf", &hotX) != 1 || hotX < 0 || hotX > 1024) {
+            MMLog(BOLD RED "Invalid X Hotspot (0-1024)" RESET);
+            continue;
+        }
         printf("Y Hotspot: ");
-        scanf("%lf", &hotY);
+        if (scanf("%lf", &hotY) != 1 || hotY < 0 || hotY > 1024) {
+            MMLog(BOLD RED "Invalid Y Hotspot (0-1024)" RESET);
+            continue;
+        }
         printf("Points Wide: ");
-        scanf("%lf", &pW);
+        if (scanf("%lf", &pW) != 1 || pW <= 0 || pW > 1024) {
+            MMLog(BOLD RED "Invalid Points Wide (1-1024)" RESET);
+            continue;
+        }
         printf("Points High: ");
-        scanf("%lf", &pH);
+        if (scanf("%lf", &pH) != 1 || pH <= 0 || pH > 1024) {
+            MMLog(BOLD RED "Invalid Points High (1-1024)" RESET);
+            continue;
+        }
         printf("Frame Count: ");
-        scanf("%lu", &fC);
+        if (scanf("%lu", &fC) != 1 || fC < 1 || fC > 24) {
+            MMLog(BOLD RED "Invalid Frame Count (1-24)" RESET);
+            continue;
+        }
         printf("Frame Duration: ");
-        scanf("%lf", &fD);
+        if (scanf("%lf", &fD) != 1 || fD < 0 || fD > 60) {
+            MMLog(BOLD RED "Invalid Frame Duration (0-60)" RESET);
+            continue;
+        }
         
         NSMutableArray *representations = [NSMutableArray array];
         NSArray *repNames = [manager contentsOfDirectoryAtPath:fullPath error:nil];
@@ -226,7 +249,10 @@ NSDictionary *createCapeFromMightyMouse(NSDictionary *mightyMouse, NSDictionary 
         version = [metadata[@"version"] doubleValue];
     else {
         MMLog("Cape Version: ");
-        scanf("%lf", &version);
+        if (scanf("%lf", &version) != 1 || version < 0 || version > 1000) {
+            MMLog(BOLD RED "Invalid version number" RESET);
+            return nil;
+        }
     }
     
     totalDict[MCCursorDictionaryAuthorKey]      = author;

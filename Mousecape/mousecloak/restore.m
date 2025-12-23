@@ -12,7 +12,11 @@
 #import "MCDefs.h"
 
 NSString *restoreStringForIdentifier(NSString *identifier) {
-    return [identifier substringFromIndex:28];
+    NSString *prefix = @"com.alexzielenski.mousecape.";
+    if ([identifier hasPrefix:prefix] && identifier.length > prefix.length) {
+        return [identifier substringFromIndex:prefix.length];
+    }
+    return identifier;
 }
 
 void restoreCursorForIdentifier(NSString *ident) {

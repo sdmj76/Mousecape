@@ -8,6 +8,7 @@
 
 #import "scale.h"
 #import "MCPrefs.h"
+#import <math.h>
 
 float cursorScale() {
     float value;
@@ -23,8 +24,8 @@ float defaultCursorScale() {
 }
 
 BOOL setCursorScale(float dbl) {
-    if (dbl > 32) {
-        MMLog("Not a good idea...");
+    if (!isfinite(dbl) || dbl <= 0 || dbl > 16) {
+        MMLog(BOLD RED "Invalid cursor scale (must be 0 < scale <= 16)" RESET);
         return NO;
     } else if (CGSSetCursorScale(CGSMainConnectionID(), dbl) == noErr) {
         MMLog("Successfully set cursor scale!");
