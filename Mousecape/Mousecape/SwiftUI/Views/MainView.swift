@@ -15,7 +15,7 @@ struct MainView: View {
     var body: some View {
         @Bindable var appState = appState
 
-        // Content
+        // Content (no transition here - handled inside HomeView)
         Group {
             switch appState.currentPage {
             case .home:
@@ -26,25 +26,66 @@ struct MainView: View {
         }
         // Toolbar in title bar area
         .toolbar {
-            // Center: Page switcher
-            ToolbarItem(placement: .principal) {
-                Picker(selection: $appState.currentPage) {
-                    ForEach(AppPage.allCases) { page in
-                        Text(localization.localized(page.title))
-                            .tag(page)
+            // Left: Page switcher or Back button
+            ToolbarItem(placement: .navigation) {
+                if appState.isEditing {
+                    // Edit mode: Back button
+                    Button(action: { appState.requestCloseEdit() }) {
+                        Label("Back", systemImage: "chevron.left")
                     }
-                } label: {
-                    EmptyView()
+                    .help("Back")
+                } else {
+                    // Normal mode: Page switcher
+                    Picker(selection: $appState.currentPage) {
+                        ForEach(AppPage.allCases) { page in
+                            Text(localization.localized(page.title))
+                                .tag(page)
+                        }
+                    } label: {
+                        EmptyView()
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                // .glassEffect(.regular, in: .capsule)
-                .frame(width: 160)
             }
 
-            // Right: Action buttons (only on Home page)
-            ToolbarItemGroup(placement: .primaryAction) {
-                if appState.currentPage == .home {
+            // Center: Title or Spacer
+            ToolbarItem(placement: .principal) {
+                if appState.isEditing, let cape = appState.editingCape {
+                    Text("Edit: \(cape.name)")
+                        .font(.headline)
+                } else {
+                    Spacer()
+                }
+            }
+            .sharedBackgroundVisibility(.hidden)
+
+            // Right: Action buttons
+            if appState.isEditing {
+                // Edit mode buttons
+                ToolbarItemGroup(placement: .primaryAction) {
+                    Button(action: {
+                        appState.showCapeInfo.toggle()
+                        if appState.showCapeInfo {
+                            appState.editingSelectedCursor = nil
+                        }
+                    }) {
+                        Image(systemName: appState.showCapeInfo ? "info.circle.fill" : "info.circle")
+                    }
+                    .help("Cape Info")
+
+                    Button(action: {
+                        if let cape = appState.editingCape {
+                            appState.saveCape(cape)
+                        }
+                    }) {
+                        Image(systemName: "square.and.arrow.down")
+                    }
+                    .help("Save")
+                }
+            } else if appState.currentPage == .home {
+                // Home page buttons
+                ToolbarItemGroup(placement: .primaryAction) {
                     Button(action: { appState.createNewCape() }) {
                         Image(systemName: "plus")
                     }
@@ -112,6 +153,26 @@ struct MainView: View {
             }
         } message: { cape in
             Text("\(localization.localized("Are you sure you want to delete")) \"\(cape.name)\"? \(localization.localized("This action cannot be undone."))")
+        }
+        // Discard changes confirmation alert (macOS native style)
+        .alert(
+            localization.localized("Unsaved Changes"),
+            isPresented: $appState.showDiscardConfirmation
+        ) {
+            Button(localization.localized("Save")) {
+                appState.closeEditWithSave()
+            }
+            .keyboardShortcut(.defaultAction)
+
+            Button(localization.localized("Don't Save"), role: .destructive) {
+                appState.closeEdit()
+            }
+
+            Button(localization.localized("Cancel"), role: .cancel) {
+                appState.showDiscardConfirmation = false
+            }
+        } message: {
+            Text(localization.localized("Do you want to save the changes you made?"))
         }
     }
 }

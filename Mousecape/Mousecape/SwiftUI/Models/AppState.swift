@@ -34,9 +34,18 @@ final class AppState: @unchecked Sendable {
     /// Cape being edited
     var editingCape: CursorLibrary?
 
+    /// Edit mode: selected cursor
+    var editingSelectedCursor: Cursor?
+
+    /// Edit mode: show cape info panel
+    var showCapeInfo: Bool = false
+
     /// Delete confirmation state
     var showDeleteConfirmation: Bool = false
     var capeToDelete: CursorLibrary?
+
+    /// Discard changes confirmation state
+    var showDiscardConfirmation: Bool = false
 
     /// Loading state
     var isLoading: Bool = false
@@ -158,14 +167,43 @@ final class AppState: @unchecked Sendable {
 
     /// Edit a cape
     func editCape(_ cape: CursorLibrary) {
+        // Clear dirty flag when entering edit mode
+        // This ensures we only track changes made during this editing session
+        cape.clearChangeCount()
         editingCape = cape
         isEditing = true
     }
 
-    /// Close edit mode
+    /// Request to close edit mode (may show confirmation if dirty)
+    func requestCloseEdit() {
+        if editingCape?.isDirty == true {
+            showDiscardConfirmation = true
+        } else {
+            closeEdit()
+        }
+    }
+
+    /// Close edit mode (discard changes)
     func closeEdit() {
+        // Revert unsaved changes
+        editingCape?.revertToSaved()
         isEditing = false
         editingCape = nil
+        editingSelectedCursor = nil
+        showCapeInfo = false
+        showDiscardConfirmation = false
+    }
+
+    /// Close edit mode after saving
+    func closeEditWithSave() {
+        if let cape = editingCape {
+            saveCape(cape)
+        }
+        isEditing = false
+        editingCape = nil
+        editingSelectedCursor = nil
+        showCapeInfo = false
+        showDiscardConfirmation = false
     }
 
     /// Save the currently editing cape

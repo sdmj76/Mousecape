@@ -10,53 +10,77 @@ import SwiftUI
 struct CapePreviewPanel: View {
     let cape: CursorLibrary
     @Environment(AppState.self) private var appState
+    @State private var zoomedCursor: Cursor?
+    @Namespace private var cursorNamespace
 
     private var isApplied: Bool {
         appState.appliedCape?.id == cape.id
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Top: Cape info
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text(cape.name)
-                                .font(.title2.bold())
-                            if isApplied {
-                                AppliedBadge()
+        ZStack {
+            VStack(spacing: 0) {
+                // Top: Cape info
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(cape.name)
+                                    .font(.title2.bold())
+                                if isApplied {
+                                    AppliedBadge()
+                                }
                             }
+                            Text("by \(cape.author)")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
                         }
-                        Text("by \(cape.author)")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        Spacer()
                     }
+                    .padding()
+                    .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                }
+                .padding()
+
+                Divider()
+
+                // Middle: Cursor preview grid (auto-wrapping)
+                ScrollView {
+                    CursorFlowGrid(
+                        cursors: cape.cursors,
+                        zoomedCursor: zoomedCursor,
+                        namespace: cursorNamespace
+                    ) { cursor in
+                        withAnimation(.spring(duration: 0.4, bounce: 0.2)) {
+                            zoomedCursor = cursor
+                        }
+                    }
+                    .padding()
+                }
+
+                Divider()
+
+                // Bottom: Cursor count
+                HStack {
+                    Text(cape.summary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     Spacer()
                 }
                 .padding()
-                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
-            }
-            .padding()
-
-            Divider()
-
-            // Middle: Cursor preview grid (auto-wrapping)
-            ScrollView {
-                CursorFlowGrid(cursors: cape.cursors)
-                    .padding()
             }
 
-            Divider()
-
-            // Bottom: Cursor count
-            HStack {
-                Text(cape.summary)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Spacer()
+            // Zoom overlay
+            if let cursor = zoomedCursor {
+                CursorZoomOverlay(
+                    cursor: cursor,
+                    namespace: cursorNamespace
+                ) {
+                    withAnimation(.spring(duration: 0.4, bounce: 0.2)) {
+                        zoomedCursor = nil
+                    }
+                }
             }
-            .padding()
         }
     }
 }
@@ -73,19 +97,101 @@ struct AppliedBadge: View {
     }
 }
 
+// MARK: - Cursor Zoom Overlay
+
+struct CursorZoomOverlay: View {
+    let cursor: Cursor
+    let namespace: Namespace.ID
+    let onDismiss: () -> Void
+
+    @State private var showDetails = false
+
+    var body: some View {
+        ZStack {
+            // Dimmed background - click to dismiss
+            Color.black.opacity(0.6)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    onDismiss()
+                }
+
+            // Centered zoomed cursor with matched geometry
+            VStack(spacing: 16) {
+                AnimatingCursorView(cursor: cursor, showHotspot: true)
+                    .frame(width: 128, height: 128)
+                    .matchedGeometryEffect(id: cursor.id, in: namespace)
+
+                // Details fade in after the cursor arrives
+                if showDetails {
+                    VStack(spacing: 4) {
+                        Text(cursor.displayName)
+                            .font(.title3.bold())
+
+                        Text(cursor.identifier)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        if cursor.frameCount > 1 {
+                            Text("\(cursor.frameCount) frames")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                    .transition(.opacity)
+                }
+            }
+            .padding(24)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+            .shadow(radius: 20)
+        }
+        .contentShape(Rectangle())
+        .onKeyPress(.escape) {
+            onDismiss()
+            return .handled
+        }
+        .onAppear {
+            // Delay showing details until cursor animation completes
+            withAnimation(.easeOut(duration: 0.3).delay(0.2)) {
+                showDetails = true
+            }
+        }
+    }
+}
+
 // MARK: - Cursor Flow Grid (Auto-wrapping)
 
 struct CursorFlowGrid: View {
     let cursors: [Cursor]
+    let zoomedCursor: Cursor?
+    let namespace: Namespace.ID
+    var onCursorTap: ((Cursor) -> Void)?
+
+    init(
+        cursors: [Cursor],
+        zoomedCursor: Cursor? = nil,
+        namespace: Namespace.ID,
+        onCursorTap: ((Cursor) -> Void)? = nil
+    ) {
+        self.cursors = cursors
+        self.zoomedCursor = zoomedCursor
+        self.namespace = namespace
+        self.onCursorTap = onCursorTap
+    }
 
     private let columns = [
-        GridItem(.adaptive(minimum: 64, maximum: 80), spacing: 12)
+        GridItem(.adaptive(minimum: 64, maximum: 80), spacing: 24)
     ]
 
     var body: some View {
         LazyVGrid(columns: columns, spacing: 12) {
             ForEach(cursors) { cursor in
-                CursorPreviewCell(cursor: cursor)
+                CursorPreviewCell(
+                    cursor: cursor,
+                    isZoomed: zoomedCursor?.id == cursor.id,
+                    namespace: namespace
+                ) {
+                    onCursorTap?(cursor)
+                }
             }
         }
     }
@@ -95,26 +201,57 @@ struct CursorFlowGrid: View {
 
 struct CursorPreviewCell: View {
     let cursor: Cursor
+    let isZoomed: Bool
+    let namespace: Namespace.ID
+    var onTap: (() -> Void)?
     @State private var isHovered = false
+
+    init(
+        cursor: Cursor,
+        isZoomed: Bool = false,
+        namespace: Namespace.ID,
+        onTap: (() -> Void)? = nil
+    ) {
+        self.cursor = cursor
+        self.isZoomed = isZoomed
+        self.namespace = namespace
+        self.onTap = onTap
+    }
 
     var body: some View {
         VStack(spacing: 4) {
-            AnimatingCursorView(cursor: cursor, showHotspot: false)
-                .frame(width: 48, height: 48)
+            // Only show cursor here if not zoomed (it moves to overlay)
+            if !isZoomed {
+                AnimatingCursorView(cursor: cursor, showHotspot: false)
+                    .frame(width: 48, height: 48)
+                    .matchedGeometryEffect(id: cursor.id, in: namespace)
+            } else {
+                // Placeholder to maintain layout
+                Color.clear
+                    .frame(width: 48, height: 48)
+            }
 
-            Text(cursor.displayName)
-                .font(.caption2)
-                .lineLimit(1)
-                .truncationMode(.tail)
+            if !isZoomed {
+                Text(cursor.displayName)
+                    .font(.caption2)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
         }
         .padding(8)
         .glassEffect(
-            isHovered ? .regular : .clear,
+            isHovered && !isZoomed ? .regular : .clear,
             in: RoundedRectangle(cornerRadius: 8)
         )
-        .scaleEffect(isHovered ? 1.1 : 1.0)
+        .opacity(isZoomed ? 0 : 1)
+        .scaleEffect(isHovered && !isZoomed ? 1.1 : 1.0)
         .animation(.spring(duration: 0.2), value: isHovered)
         .onHover { isHovered = $0 }
+        .onTapGesture {
+            if !isZoomed {
+                onTap?()
+            }
+        }
         .help(cursor.identifier)
     }
 }

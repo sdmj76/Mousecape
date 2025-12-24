@@ -41,6 +41,20 @@ struct MousecapeCommands: Commands {
             }
         }
 
+        // Save command - Cmd+S (saves in edit mode, exports otherwise)
+        CommandGroup(replacing: .saveItem) {
+            Button("Save") {
+                Task { @MainActor in
+                    if AppState.shared.isEditing, let cape = AppState.shared.editingCape {
+                        AppState.shared.saveCape(cape)
+                    } else if let cape = selectedCape {
+                        AppState.shared.exportCape(cape)
+                    }
+                }
+            }
+            .keyboardShortcut("s", modifiers: .command)
+        }
+
         // Remove Edit menu items (Undo/Redo/Cut/Copy/Paste)
         CommandGroup(replacing: .textEditing) { }
         CommandGroup(replacing: .undoRedo) { }
@@ -77,7 +91,7 @@ struct MousecapeCommands: Commands {
                     }
                 }
             }
-            .keyboardShortcut("s", modifiers: .command)
+            .keyboardShortcut("s", modifiers: [.command, .shift])
             .disabled(selectedCape == nil)
 
             Button("Show in Finder") {

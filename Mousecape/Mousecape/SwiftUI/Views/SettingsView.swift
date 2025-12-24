@@ -10,10 +10,11 @@ import SwiftUI
 
 struct SettingsView: View {
     @State private var selectedCategory: SettingsCategory = .general
+    @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @Environment(LocalizationManager.self) private var localization
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
             // Left sidebar: Category list
             List(SettingsCategory.allCases, selection: $selectedCategory) { category in
                 Label(localization.localized(category.title), systemImage: category.icon)
@@ -21,10 +22,23 @@ struct SettingsView: View {
             }
             .listStyle(.sidebar)
             .navigationSplitViewColumnWidth(min: 150, ideal: 180, max: 220)
+            .toolbar(removing: .sidebarToggle)
         } detail: {
             // Right: Settings content based on selected category
             settingsContent
                 .transition(.opacity.animation(.easeInOut(duration: 0.2)))
+        }
+        .toolbar(removing: .sidebarToggle)
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button {
+                    withAnimation {
+                        columnVisibility = columnVisibility == .all ? .detailOnly : .all
+                    }
+                } label: {
+                    Image(systemName: "sidebar.leading")
+                }
+            }
         }
     }
 

@@ -12,6 +12,7 @@ import SwiftUI
 struct MousecapeApp: App {
     @State private var appState = AppState.shared
     @State private var localization = LocalizationManager.shared
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
         WindowGroup {
@@ -39,9 +40,67 @@ struct MousecapeApp: App {
             window.titlebarAppearsTransparent = true
             window.isMovableByWindowBackground = true
 
+            // Set up window delegate for close confirmation
+            appDelegate.setupWindowDelegate(for: window, appState: appState)
+
 // ToolbarHider disabled - testing separate ToolbarItems
             // ToolbarHider.startMonitoring()
         }
+    }
+}
+
+// MARK: - App Delegate
+
+class AppDelegate: NSObject, NSApplicationDelegate {
+    private var windowDelegate: WindowDelegate?
+
+    @MainActor
+    func setupWindowDelegate(for window: NSWindow, appState: AppState) {
+        windowDelegate = WindowDelegate(appState: appState)
+        window.delegate = windowDelegate
+        windowDelegate?.startObservingDirtyState()
+    }
+}
+
+// MARK: - Window Delegate (handles close confirmation)
+
+@MainActor
+class WindowDelegate: NSObject, NSWindowDelegate {
+    private let appState: AppState
+    private var timer: Timer?
+
+    init(appState: AppState) {
+        self.appState = appState
+        super.init()
+    }
+
+    func startObservingDirtyState() {
+        // Use a timer to periodically check dirty state
+        timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            self?.updateDocumentEdited()
+        }
+    }
+
+    private func updateDocumentEdited() {
+        guard let window = NSApp.windows.first else { return }
+        let isDirty = appState.isEditing && (appState.editingCape?.isDirty == true)
+        if window.isDocumentEdited != isDirty {
+            window.isDocumentEdited = isDirty
+        }
+    }
+
+    nonisolated func windowShouldClose(_ sender: NSWindow) -> Bool {
+        let shouldBlock = MainActor.assumeIsolated {
+            appState.isEditing && appState.editingCape?.isDirty == true
+        }
+
+        if shouldBlock {
+            Task { @MainActor in
+                appState.showDiscardConfirmation = true
+            }
+            return false
+        }
+        return true
     }
 }
 
@@ -179,30 +238,17 @@ struct ContentView: View {
     var body: some View {
         @Bindable var appState = appState
 
-        ZStack {
-            // Main interface layer (Home / Settings) - 仅在非编辑模式显示
-            if !appState.isEditing {
-                MainView()
-                    .transition(.opacity)
+        MainView()
+            // Error alert
+            .alert("Error", isPresented: $appState.showError) {
+                Button("OK") {
+                    appState.showError = false
+                }
+            } message: {
+                if let error = appState.lastError {
+                    Text(error.localizedDescription)
+                }
             }
-
-            // Edit view - 完全覆盖主界面
-            if appState.isEditing, let cape = appState.editingCape {
-                EditOverlayView(cape: cape)
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
-            }
-        }
-        .animation(.spring(duration: 0.4), value: appState.isEditing)
-        // Error alert
-        .alert("Error", isPresented: $appState.showError) {
-            Button("OK") {
-                appState.showError = false
-            }
-        } message: {
-            if let error = appState.lastError {
-                Text(error.localizedDescription)
-            }
-        }
     }
 }
 

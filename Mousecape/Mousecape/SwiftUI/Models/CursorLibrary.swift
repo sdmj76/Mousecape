@@ -115,6 +115,11 @@ final class CursorLibrary: Identifiable, Hashable {
         _cursors = nil // Invalidate cache
     }
 
+    /// Clear the dirty flag (mark as saved)
+    func clearChangeCount() {
+        objcLibrary.updateChangeCount(.changeCleared)
+    }
+
     // MARK: - Initialization
 
     init(objcLibrary: MCCursorLibrary) {

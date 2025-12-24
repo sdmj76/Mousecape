@@ -9,12 +9,13 @@ import SwiftUI
 
 struct HomeView: View {
     @Environment(AppState.self) private var appState
+    @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
     var body: some View {
         @Bindable var appState = appState
 
-        NavigationSplitView {
-            // Left side: Cape icon grid
+        NavigationSplitView(columnVisibility: $columnVisibility) {
+            // Left side: Cape icon grid (always visible)
             Group {
                 if appState.capes.isEmpty {
                     EmptyStateView()
@@ -23,19 +24,55 @@ struct HomeView: View {
                 }
             }
             .navigationSplitViewColumnWidth(min: 200, ideal: 280, max: 400)
+            .toolbar(removing: .sidebarToggle)
         } detail: {
-            // Right side: Preview panel
-            if let cape = appState.selectedCape {
-                CapePreviewPanel(cape: cape)
-            } else {
-                ContentUnavailableView(
-                    "Select a Cape",
-                    systemImage: "cursorarrow.click.2",
-                    description: Text("Choose a cape from the list to preview")
-                )
+            // Right side: Preview or Edit panel with slide transition
+            ZStack {
+                // Preview panel
+                if !appState.isEditing {
+                    Group {
+                        if let cape = appState.selectedCape {
+                            CapePreviewPanel(cape: cape)
+                        } else {
+                            ContentUnavailableView(
+                                "Select a Cape",
+                                systemImage: "cursorarrow.click.2",
+                                description: Text("Choose a cape from the list to preview")
+                            )
+                        }
+                    }
+                    .transition(.move(edge: .leading).combined(with: .opacity))
+                }
+
+                // Edit panel
+                if appState.isEditing, let cape = appState.editingCape {
+                    EditDetailView(cape: cape)
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                }
             }
+            .animation(.spring(duration: 0.35, bounce: 0.15), value: appState.isEditing)
         }
         .focusedSceneValue(\.selectedCape, $appState.selectedCape)
+        // Hide sidebar toggle button when editing
+        .toolbar(removing: .sidebarToggle)
+        .toolbar {
+            // Re-add sidebar toggle only when not editing
+            if !appState.isEditing {
+                ToolbarItem(placement: .navigation) {
+                    Button {
+                        withAnimation {
+                            columnVisibility = columnVisibility == .all ? .detailOnly : .all
+                        }
+                    } label: {
+                        Image(systemName: "sidebar.leading")
+                    }
+                }
+            }
+        }
+        // Hide sidebar when editing (uses system default animation)
+        .onChange(of: appState.isEditing) { _, isEditing in
+            columnVisibility = isEditing ? .detailOnly : .all
+        }
     }
 }
 

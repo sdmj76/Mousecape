@@ -9,81 +9,48 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-struct EditOverlayView: View {
+// MARK: - Edit Detail View (for right panel only, with cursor list)
+
+struct EditDetailView: View {
     let cape: CursorLibrary
     @Environment(AppState.self) private var appState
-    @State private var selectedCursor: Cursor?
-    @State private var showCapeInfo = false
     @State private var showAddCursorSheet = false
 
     var body: some View {
-        NavigationSplitView {
-            // Left sidebar: Cursor list (same style as HomeView/SettingsView)
+        @Bindable var appState = appState
+
+        HSplitView {
+            // Left: Cursor list
             CursorListView(
                 cape: cape,
-                selection: $selectedCursor,
+                selection: $appState.editingSelectedCursor,
                 onAddCursor: { showAddCursorSheet = true }
             )
-            .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 280)
-        } detail: {
-            // Right side: Content area with its own toolbar
+            .frame(minWidth: 180, idealWidth: 220, maxWidth: 280)
+
+            // Right: Detail content
             detailContent
-                .toolbar {
-                    // Left: Back button (in detail area)
-                    ToolbarItem(placement: .navigation) {
-                        Button(action: { appState.closeEdit() }) {
-                            Image(systemName: "chevron.left")
-                        }
-                        .help("Back")
-                    }
-
-                    // Center: Title
-                    ToolbarItem(placement: .principal) {
-                        Text("Edit: \(cape.name)")
-                            .font(.headline)
-                    }
-
-                    // Right: Action buttons
-                    ToolbarItemGroup(placement: .primaryAction) {
-                        Button(action: {
-                            showCapeInfo.toggle()
-                            if showCapeInfo {
-                                selectedCursor = nil
-                            }
-                        }) {
-                            Image(systemName: showCapeInfo ? "info.circle.fill" : "info.circle")
-                        }
-                        .help("Cape Info")
-
-                        Button(action: { saveCape() }) {
-                            Image(systemName: "square.and.arrow.down")
-                        }
-                        .help("Save")
-
-                        Button(action: { applyCape() }) {
-                            Image(systemName: "checkmark.circle")
-                        }
-                        .help("Apply")
-                    }
-                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(minWidth: 300)
         }
-        .toolbar(removing: .sidebarToggle)
         .onAppear {
             // Select first cursor when opening
-            selectedCursor = cape.cursors.first
+            if appState.editingSelectedCursor == nil {
+                appState.editingSelectedCursor = cape.cursors.first
+            }
         }
         .sheet(isPresented: $showAddCursorSheet) {
             AddCursorSheet(cape: cape) { newCursor in
-                selectedCursor = newCursor
+                appState.editingSelectedCursor = newCursor
             }
         }
     }
 
     @ViewBuilder
     private var detailContent: some View {
-        if showCapeInfo {
+        if appState.showCapeInfo {
             CapeInfoView(cape: cape)
-        } else if let cursor = selectedCursor {
+        } else if let cursor = appState.editingSelectedCursor {
             CursorDetailView(cursor: cursor, cape: cape)
         } else {
             ContentUnavailableView(
@@ -93,13 +60,56 @@ struct EditOverlayView: View {
             )
         }
     }
+}
 
-    private func saveCape() {
-        appState.saveCape(cape)
+// MARK: - Edit Overlay View (legacy, full screen)
+
+struct EditOverlayView: View {
+    let cape: CursorLibrary
+    @Environment(AppState.self) private var appState
+    @State private var showAddCursorSheet = false
+
+    var body: some View {
+        @Bindable var appState = appState
+
+        NavigationSplitView {
+            // Left sidebar: Cursor list (same style as HomeView/SettingsView)
+            CursorListView(
+                cape: cape,
+                selection: $appState.editingSelectedCursor,
+                onAddCursor: { showAddCursorSheet = true }
+            )
+            .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 280)
+        } detail: {
+            // Right side: Content area
+            detailContent
+        }
+        .onAppear {
+            // Select first cursor when opening
+            if appState.editingSelectedCursor == nil {
+                appState.editingSelectedCursor = cape.cursors.first
+            }
+        }
+        .sheet(isPresented: $showAddCursorSheet) {
+            AddCursorSheet(cape: cape) { newCursor in
+                appState.editingSelectedCursor = newCursor
+            }
+        }
     }
 
-    private func applyCape() {
-        appState.applyCape(cape)
+    @ViewBuilder
+    private var detailContent: some View {
+        if appState.showCapeInfo {
+            CapeInfoView(cape: cape)
+        } else if let cursor = appState.editingSelectedCursor {
+            CursorDetailView(cursor: cursor, cape: cape)
+        } else {
+            ContentUnavailableView(
+                "Select a Cursor",
+                systemImage: "cursorarrow.click",
+                description: Text("Choose a cursor from the list to edit")
+            )
+        }
     }
 }
 
@@ -564,7 +574,7 @@ struct ResolutionDropZone: View {
                     }
                     .padding(2)
                 } else {
-                    Image(systemName: "plus.dashed")
+                    Image(systemName: "plus")
                         .font(.title2)
                         .foregroundStyle(.tertiary)
                         .frame(width: 64, height: 64)
