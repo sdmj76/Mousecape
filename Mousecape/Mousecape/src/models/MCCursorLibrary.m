@@ -125,7 +125,7 @@ NSString *const MCLibraryDidSaveNotificationName = @"MCLibraryDidSave";
         
         self.name           = NSLocalizedString(@"Unnamed", "Default New Cape Name");
         self.author         = NSUserName();
-        self.hiDPI          = NO;
+        self.hiDPI          = YES;
         self.inCloud        = NO;
         self.identifier     = [NSString stringWithFormat:@"local.%@.Unnamed.%f", self.author, [NSDate timeIntervalSinceReferenceDate]];
         self.version        = @1.0;

@@ -46,6 +46,12 @@ final class AppState: @unchecked Sendable {
     /// Refresh trigger for cursor list (increment to force refresh)
     var cursorListRefreshTrigger: Int = 0
 
+    /// Show add cursor sheet
+    var showAddCursorSheet: Bool = false
+
+    /// Show delete cursor confirmation
+    var showDeleteCursorConfirmation: Bool = false
+
     /// Delete confirmation state
     var showDeleteConfirmation: Bool = false
     var capeToDelete: CursorLibrary?
@@ -332,8 +338,16 @@ final class AppState: @unchecked Sendable {
 
     /// Delete a cape (after confirmation)
     func deleteCape(_ cape: CursorLibrary) {
-        // If this is the applied cape, reset first
-        if appliedCape?.id == cape.id {
+        let wasSelected = selectedCape?.id == cape.id
+        let wasApplied = appliedCape?.id == cape.id
+
+        // Clear selection first if this cape was selected (before deletion)
+        if wasSelected {
+            selectedCape = nil
+        }
+
+        // If this is the applied cape, reset to default
+        if wasApplied {
             resetToDefault()
         }
 
@@ -355,11 +369,6 @@ final class AppState: @unchecked Sendable {
 
         loadCapes()
 
-        // Clear selection if deleted cape was selected
-        if selectedCape?.id == cape.id {
-            selectedCape = nil
-        }
-
         capeToDelete = nil
         showDeleteConfirmation = false
     }
@@ -367,6 +376,28 @@ final class AppState: @unchecked Sendable {
     /// Refresh capes list
     func refreshCapes() {
         loadCapes()
+    }
+
+    // MARK: - Cursor Actions (Edit Mode)
+
+    /// Delete the currently selected cursor
+    func deleteSelectedCursor() {
+        guard let cape = editingCape, let cursor = editingSelectedCursor else { return }
+        cape.removeCursor(cursor)
+        editingSelectedCursor = cape.cursors.first
+        markAsChanged()
+        cursorListRefreshTrigger += 1
+        showDeleteCursorConfirmation = false
+    }
+
+    /// Add a cursor with the given type
+    func addCursor(type: CursorType) {
+        guard let cape = editingCape else { return }
+        let newCursor = Cursor(identifier: type.rawValue)
+        cape.addCursor(newCursor)
+        editingSelectedCursor = newCursor
+        markAsChanged()
+        cursorListRefreshTrigger += 1
     }
 
     // MARK: - Preferences

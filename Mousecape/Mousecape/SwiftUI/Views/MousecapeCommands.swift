@@ -74,9 +74,7 @@ struct MousecapeCommands: Commands {
             .disabled(!AppState.shared.canRedo || !AppState.shared.isEditing)
         }
 
-        // Remove other Edit menu items
-        CommandGroup(replacing: .textEditing) { }
-        CommandGroup(replacing: .pasteboard) { }
+        // Keep standard pasteboard/text editing commands for text fields
 
         // Cape menu - matches context menu
         CommandMenu("Cape") {
@@ -87,7 +85,7 @@ struct MousecapeCommands: Commands {
                     }
                 }
             }
-            .keyboardShortcut("a", modifiers: .command)
+            .keyboardShortcut("a", modifiers: [.command, .shift])
             .disabled(selectedCape == nil)
 
             Button("Edit") {

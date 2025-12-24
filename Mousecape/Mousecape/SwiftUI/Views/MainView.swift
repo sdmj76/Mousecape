@@ -65,6 +65,21 @@ struct MainView: View {
                 // Edit mode buttons
                 ToolbarItemGroup(placement: .primaryAction) {
                     Button(action: {
+                        appState.showAddCursorSheet = true
+                    }) {
+                        Image(systemName: "plus")
+                    }
+                    .help("Add Cursor")
+
+                    Button(action: {
+                        appState.showDeleteCursorConfirmation = true
+                    }) {
+                        Image(systemName: "minus")
+                    }
+                    .help("Delete Cursor")
+                    .disabled(appState.editingSelectedCursor == nil)
+
+                    Button(action: {
                         appState.showCapeInfo.toggle()
                         if appState.showCapeInfo {
                             appState.editingSelectedCursor = nil
@@ -173,6 +188,29 @@ struct MainView: View {
             }
         } message: {
             Text(localization.localized("Do you want to save the changes you made?"))
+        }
+        // Delete cursor confirmation dialog
+        .confirmationDialog(
+            "Delete Cursor?",
+            isPresented: $appState.showDeleteCursorConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                appState.deleteSelectedCursor()
+            }
+            Button("Cancel", role: .cancel) {
+                appState.showDeleteCursorConfirmation = false
+            }
+        } message: {
+            if let cursor = appState.editingSelectedCursor {
+                Text("Are you sure you want to delete '\(cursor.displayName)'?")
+            }
+        }
+        // Add cursor sheet
+        .sheet(isPresented: $appState.showAddCursorSheet) {
+            if let cape = appState.editingCape {
+                AddCursorSheet(cape: cape)
+            }
         }
     }
 }

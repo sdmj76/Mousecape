@@ -38,7 +38,6 @@ struct MousecapeApp: App {
 
             // Make titlebar transparent
             window.titlebarAppearsTransparent = true
-            window.isMovableByWindowBackground = true
 
             // Set up window delegate for close confirmation
             appDelegate.setupWindowDelegate(for: window, appState: appState)

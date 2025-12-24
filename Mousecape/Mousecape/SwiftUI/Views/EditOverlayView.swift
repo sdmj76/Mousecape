@@ -14,7 +14,6 @@ import UniformTypeIdentifiers
 struct EditDetailView: View {
     let cape: CursorLibrary
     @Environment(AppState.self) private var appState
-    @State private var showAddCursorSheet = false
 
     var body: some View {
         @Bindable var appState = appState
@@ -23,8 +22,7 @@ struct EditDetailView: View {
             // Left: Cursor list
             CursorListView(
                 cape: cape,
-                selection: $appState.editingSelectedCursor,
-                onAddCursor: { showAddCursorSheet = true }
+                selection: $appState.editingSelectedCursor
             )
             .frame(minWidth: 180, idealWidth: 220, maxWidth: 280)
 
@@ -39,11 +37,6 @@ struct EditDetailView: View {
                 appState.editingSelectedCursor = cape.cursors.first
             }
         }
-        .sheet(isPresented: $showAddCursorSheet) {
-            AddCursorSheet(cape: cape) { newCursor in
-                appState.editingSelectedCursor = newCursor
-            }
-        }
     }
 
     @ViewBuilder
@@ -52,6 +45,7 @@ struct EditDetailView: View {
             CapeInfoView(cape: cape)
         } else if let cursor = appState.editingSelectedCursor {
             CursorDetailView(cursor: cursor, cape: cape)
+                .id(cursor.id)  // Force view recreation when cursor changes
         } else {
             ContentUnavailableView(
                 "Select a Cursor",
@@ -67,7 +61,6 @@ struct EditDetailView: View {
 struct EditOverlayView: View {
     let cape: CursorLibrary
     @Environment(AppState.self) private var appState
-    @State private var showAddCursorSheet = false
 
     var body: some View {
         @Bindable var appState = appState
@@ -76,8 +69,7 @@ struct EditOverlayView: View {
             // Left sidebar: Cursor list (same style as HomeView/SettingsView)
             CursorListView(
                 cape: cape,
-                selection: $appState.editingSelectedCursor,
-                onAddCursor: { showAddCursorSheet = true }
+                selection: $appState.editingSelectedCursor
             )
             .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 280)
         } detail: {
@@ -90,11 +82,6 @@ struct EditOverlayView: View {
                 appState.editingSelectedCursor = cape.cursors.first
             }
         }
-        .sheet(isPresented: $showAddCursorSheet) {
-            AddCursorSheet(cape: cape) { newCursor in
-                appState.editingSelectedCursor = newCursor
-            }
-        }
     }
 
     @ViewBuilder
@@ -103,6 +90,7 @@ struct EditOverlayView: View {
             CapeInfoView(cape: cape)
         } else if let cursor = appState.editingSelectedCursor {
             CursorDetailView(cursor: cursor, cape: cape)
+                .id(cursor.id)  // Force view recreation when cursor changes
         } else {
             ContentUnavailableView(
                 "Select a Cursor",
@@ -203,22 +191,6 @@ struct CapeInfoView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    LabeledContent("HiDPI") {
-                        Toggle("", isOn: Binding(
-                            get: { cape.isHiDPI },
-                            set: { newValue in
-                                let oldValue = cape.isHiDPI
-                                guard newValue != oldValue else { return }
-                                cape.isHiDPI = newValue
-                                appState.registerUndo(
-                                    undo: { [weak cape] in cape?.isHiDPI = oldValue },
-                                    redo: { [weak cape] in cape?.isHiDPI = newValue }
-                                )
-                            }
-                        ))
-                        .labelsHidden()
-                    }
-
                     if let url = cape.fileURL {
                         LabeledContent("File") {
                             Text(url.lastPathComponent)
@@ -266,10 +238,9 @@ struct CapeInfoView: View {
 
 struct AddCursorSheet: View {
     let cape: CursorLibrary
-    let onAdd: (Cursor) -> Void
     @Environment(\.dismiss) private var dismiss
     @Environment(AppState.self) private var appState
-    @State private var selectedType: CursorType = .arrow
+    @State private var selectedType: CursorType?
 
     // Filter out cursor types that already exist in the cape
     private var availableTypes: [CursorType] {
@@ -282,48 +253,107 @@ struct AddCursorSheet: View {
             Text("Add Cursor")
                 .font(.headline)
 
-            if availableTypes.isEmpty {
-                ContentUnavailableView(
-                    "All Cursor Types Added",
-                    systemImage: "checkmark.circle",
-                    description: Text("This cape already contains all standard cursor types.")
-                )
-            } else {
-                List(availableTypes, selection: $selectedType) { type in
-                    HStack {
-                        Image(systemName: type.previewSymbol)
-                        Text(type.displayName)
-                    }
-                    .tag(type)
-                }
-                .frame(height: 300)
-            }
+            cursorTypeList
 
-            HStack {
-                Button("Cancel") {
-                    dismiss()
-                }
-                .keyboardShortcut(.cancelAction)
-
-                Spacer()
-
-                Button("Add") {
-                    let newCursor = Cursor(identifier: selectedType.rawValue)
-                    cape.addCursor(newCursor)
-                    appState.markAsChanged()
-                    onAdd(newCursor)
-                    dismiss()
-                }
-                .keyboardShortcut(.defaultAction)
-                .disabled(availableTypes.isEmpty)
-            }
+            buttonBar
         }
         .padding()
         .frame(width: 350, height: 420)
         .onAppear {
-            if let first = availableTypes.first {
-                selectedType = first
+            selectedType = availableTypes.first
+        }
+    }
+
+    @ViewBuilder
+    private var cursorTypeList: some View {
+        if availableTypes.isEmpty {
+            ContentUnavailableView(
+                "All Cursor Types Added",
+                systemImage: "checkmark.circle",
+                description: Text("This cape already contains all standard cursor types.")
+            )
+        } else {
+            ScrollView {
+                LazyVStack(spacing: 2) {
+                    ForEach(availableTypes) { type in
+                        CursorTypeRow(
+                            type: type,
+                            isSelected: selectedType == type,
+                            onSelect: { selectedType = type }
+                        )
+                    }
+                }
+                .padding(8)
             }
+            .frame(height: 300)
+            .glassEffect(.regular.tint(.clear), in: RoundedRectangle(cornerRadius: 12))
+        }
+    }
+
+    private var buttonBar: some View {
+        HStack {
+            Button("Cancel") {
+                dismiss()
+            }
+            .keyboardShortcut(.cancelAction)
+
+            Spacer()
+
+            Button("Add") {
+                addSelectedCursor()
+            }
+            .keyboardShortcut(.defaultAction)
+            .disabled(selectedType == nil || availableTypes.isEmpty)
+        }
+    }
+
+    private func addSelectedCursor() {
+        guard let type = selectedType else { return }
+
+        // Create and add cursor directly via AppState
+        let newCursor = Cursor(identifier: type.rawValue)
+        cape.addCursor(newCursor)
+        appState.markAsChanged()
+        appState.cursorListRefreshTrigger += 1
+        appState.editingSelectedCursor = newCursor
+
+        // Dismiss sheet
+        dismiss()
+    }
+}
+
+// MARK: - Cursor Type Row
+
+private struct CursorTypeRow: View {
+    let type: CursorType
+    let isSelected: Bool
+    let onSelect: () -> Void
+
+    var body: some View {
+        HStack {
+            Image(systemName: type.previewSymbol)
+                .frame(width: 24)
+                .foregroundStyle(isSelected ? Color.accentColor : .secondary)
+            Text(type.displayName)
+                .foregroundStyle(isSelected ? .primary : .secondary)
+            Spacer()
+            if isSelected {
+                Image(systemName: "checkmark")
+                    .foregroundStyle(Color.accentColor)
+                    .fontWeight(.semibold)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .contentShape(Rectangle())
+        .background {
+            if isSelected {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.accentColor.opacity(0.15))
+            }
+        }
+        .onTapGesture {
+            onSelect()
         }
     }
 }
@@ -333,11 +363,11 @@ struct AddCursorSheet: View {
 struct CursorListView: View {
     let cape: CursorLibrary
     @Binding var selection: Cursor?
-    let onAddCursor: () -> Void
     @Environment(AppState.self) private var appState
-    @State private var showDeleteConfirmation = false
 
     var body: some View {
+        @Bindable var appState = appState
+
         List(cape.cursors, id: \.id, selection: $selection) { cursor in
             CursorListRow(cursor: cursor, currentIdentifier: cursor.identifier)
                 .tag(cursor)
@@ -347,61 +377,12 @@ struct CursorListView: View {
                     }
                     Divider()
                     Button("Delete", role: .destructive) {
-                        showDeleteConfirmation = true
+                        appState.showDeleteCursorConfirmation = true
                     }
                 }
         }
         .listStyle(.sidebar)
         .id(appState.cursorListRefreshTrigger)  // Force list refresh when trigger changes
-        .safeAreaInset(edge: .bottom) {
-            // Bottom: Add/Remove/Duplicate buttons
-            HStack(spacing: 8) {
-                Button(action: onAddCursor) {
-                    Image(systemName: "plus")
-                }
-                .buttonStyle(.borderless)
-                .help("Add Cursor")
-
-                Button(action: { showDeleteConfirmation = true }) {
-                    Image(systemName: "minus")
-                }
-                .buttonStyle(.borderless)
-                .disabled(selection == nil)
-                .help("Remove Cursor")
-
-                Button(action: duplicateCursor) {
-                    Image(systemName: "doc.on.doc")
-                }
-                .buttonStyle(.borderless)
-                .disabled(selection == nil)
-                .help("Duplicate Cursor")
-
-                Spacer()
-            }
-            .padding(8)
-            .background(.ultraThinMaterial)
-        }
-        .confirmationDialog(
-            "Delete Cursor?",
-            isPresented: $showDeleteConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Delete", role: .destructive) {
-                removeCursor()
-            }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            if let cursor = selection {
-                Text("Are you sure you want to delete '\(cursor.displayName)'?")
-            }
-        }
-    }
-
-    private func removeCursor() {
-        guard let cursor = selection else { return }
-        cape.removeCursor(cursor)
-        selection = cape.cursors.first
-        appState.markAsChanged()
     }
 
     private func duplicateCursor() {
@@ -483,21 +464,19 @@ struct CursorDetailView: View {
     @Bindable var cursor: Cursor
     let cape: CursorLibrary
     @Environment(AppState.self) private var appState
-    @State private var showHotspot = false
+    @State private var sizeWidth: Double = 0
+    @State private var sizeHeight: Double = 0
     @State private var hotspotX: Double = 0
     @State private var hotspotY: Double = 0
     @State private var frameCount: Int = 1
-    @State private var frameDuration: Double = 0
+    @State private var fps: Double = 1  // Frames per second
     @State private var isLoadingValues = true  // Prevent onChange during load
     @State private var selectedType: CursorType = .arrow
-    // Store previous values for undo
-    @State private var prevHotspotX: Double = 0
-    @State private var prevHotspotY: Double = 0
-    @State private var prevFrameCount: Int = 1
-    @State private var prevFrameDuration: Double = 0
+    @State private var previewRefreshTrigger: Int = 0  // Force preview refresh
+    @State private var availableTypes: [CursorType] = CursorType.allCases
 
-    // Get available cursor types (current type + types not used by other cursors)
-    private var availableTypes: [CursorType] {
+    // Calculate available cursor types (current type + types not used by other cursors)
+    private func calculateAvailableTypes() -> [CursorType] {
         let otherCursorIdentifiers = Set(cape.cursors
             .filter { $0.id != cursor.id }
             .map { $0.identifier })
@@ -506,34 +485,52 @@ struct CursorDetailView: View {
         }
     }
 
+    // Calculate frame duration from FPS
+    private var frameDuration: Double {
+        fps > 0 ? 1.0 / fps : 0
+    }
+
+    // Picker types - ensure selectedType is always included to avoid "invalid selection" warning
+    private var pickerTypes: [CursorType] {
+        if availableTypes.contains(selectedType) {
+            return availableTypes
+        } else {
+            // Add current selection to the list if not present
+            return [selectedType] + availableTypes
+        }
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                // Large preview area
-                AnimatingCursorView(cursor: cursor, showHotspot: showHotspot)
-                    .frame(height: 200)
-                    .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
+                // Combined preview + drop zone
+                CursorPreviewDropZone(
+                    cursor: cursor,
+                    refreshTrigger: previewRefreshTrigger
+                )
 
                 // Properties panel
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Properties")
-                        .font(.headline)
+                VStack(alignment: .leading, spacing: 16) {
+                    // Type section
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Type")
+                            .font(.headline)
 
-                    LabeledContent("Type") {
                         Picker("", selection: $selectedType) {
-                            ForEach(availableTypes) { type in
+                            ForEach(pickerTypes) { type in
                                 Text(type.displayName).tag(type)
                             }
                         }
                         .labelsHidden()
-                        .frame(width: 180)
+                        .pickerStyle(.menu)
+                        .frame(width: 200, alignment: .leading)
+                        .id(previewRefreshTrigger)  // Force picker refresh
                         .onChange(of: selectedType) { oldValue, newValue in
                             guard !isLoadingValues else { return }
                             guard newValue != oldValue else { return }
                             let oldIdentifier = cursor.identifier
                             let newIdentifier = newValue.rawValue
                             cursor.identifier = newIdentifier
-                            // Trigger cursor list refresh
                             appState.cursorListRefreshTrigger += 1
                             appState.registerUndo(
                                 undo: { [weak cursor] in
@@ -550,9 +547,7 @@ struct CursorDetailView: View {
                                 }
                             )
                         }
-                    }
 
-                    LabeledContent("Identifier") {
                         Text(selectedType.rawValue)
                             .font(.system(.caption, design: .monospaced))
                             .foregroundStyle(.secondary)
@@ -560,55 +555,136 @@ struct CursorDetailView: View {
 
                     Divider()
 
-                    LabeledContent("Hotspot") {
-                        HStack {
-                            Text("X:")
-                            TextField("X", value: $hotspotX, format: .number.precision(.fractionLength(1)))
-                                .textFieldStyle(.roundedBorder)
-                                .frame(width: 60)
-                                .onChange(of: hotspotX) { oldValue, newValue in
-                                    guard !isLoadingValues else { return }
-                                    guard newValue != oldValue else { return }
-                                    let capturedOld = oldValue
-                                    cursor.hotSpot = NSPoint(x: CGFloat(newValue), y: cursor.hotSpot.y)
-                                    appState.registerUndo(
-                                        undo: { [weak cursor] in
-                                            cursor?.hotSpot = NSPoint(x: CGFloat(capturedOld), y: cursor?.hotSpot.y ?? 0)
-                                            self.hotspotX = capturedOld
-                                        },
-                                        redo: { [weak cursor] in
-                                            cursor?.hotSpot = NSPoint(x: CGFloat(newValue), y: cursor?.hotSpot.y ?? 0)
-                                            self.hotspotX = newValue
-                                        }
-                                    )
-                                }
-                            Text("Y:")
-                            TextField("Y", value: $hotspotY, format: .number.precision(.fractionLength(1)))
-                                .textFieldStyle(.roundedBorder)
-                                .frame(width: 60)
-                                .onChange(of: hotspotY) { oldValue, newValue in
-                                    guard !isLoadingValues else { return }
-                                    guard newValue != oldValue else { return }
-                                    let capturedOld = oldValue
-                                    cursor.hotSpot = NSPoint(x: cursor.hotSpot.x, y: CGFloat(newValue))
-                                    appState.registerUndo(
-                                        undo: { [weak cursor] in
-                                            cursor?.hotSpot = NSPoint(x: cursor?.hotSpot.x ?? 0, y: CGFloat(capturedOld))
-                                            self.hotspotY = capturedOld
-                                        },
-                                        redo: { [weak cursor] in
-                                            cursor?.hotSpot = NSPoint(x: cursor?.hotSpot.x ?? 0, y: CGFloat(newValue))
-                                            self.hotspotY = newValue
-                                        }
-                                    )
-                                }
-                            Toggle("Show", isOn: $showHotspot)
+                    // Size section
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Size")
+                            .font(.headline)
+
+                        HStack(spacing: 16) {
+                            HStack {
+                                Text("W:")
+                                TextField("Width", value: $sizeWidth, format: .number.precision(.fractionLength(0)))
+                                    .textFieldStyle(.roundedBorder)
+                                    .frame(width: 60)
+                                    .onChange(of: sizeWidth) { oldValue, newValue in
+                                        guard !isLoadingValues else { return }
+                                        guard newValue != oldValue else { return }
+                                        let capturedOld = oldValue
+                                        let actualNew = max(1, newValue)
+                                        cursor.size = NSSize(width: actualNew, height: cursor.size.height)
+                                        previewRefreshTrigger += 1
+                                        appState.registerUndo(
+                                            undo: { [weak cursor] in
+                                                cursor?.size = NSSize(width: capturedOld, height: cursor?.size.height ?? 0)
+                                                self.sizeWidth = capturedOld
+                                                self.previewRefreshTrigger += 1
+                                            },
+                                            redo: { [weak cursor] in
+                                                cursor?.size = NSSize(width: actualNew, height: cursor?.size.height ?? 0)
+                                                self.sizeWidth = actualNew
+                                                self.previewRefreshTrigger += 1
+                                            }
+                                        )
+                                    }
+                            }
+                            HStack {
+                                Text("H:")
+                                TextField("Height", value: $sizeHeight, format: .number.precision(.fractionLength(0)))
+                                    .textFieldStyle(.roundedBorder)
+                                    .frame(width: 60)
+                                    .onChange(of: sizeHeight) { oldValue, newValue in
+                                        guard !isLoadingValues else { return }
+                                        guard newValue != oldValue else { return }
+                                        let capturedOld = oldValue
+                                        let actualNew = max(1, newValue)
+                                        cursor.size = NSSize(width: cursor.size.width, height: actualNew)
+                                        previewRefreshTrigger += 1
+                                        appState.registerUndo(
+                                            undo: { [weak cursor] in
+                                                cursor?.size = NSSize(width: cursor?.size.width ?? 0, height: capturedOld)
+                                                self.sizeHeight = capturedOld
+                                                self.previewRefreshTrigger += 1
+                                            },
+                                            redo: { [weak cursor] in
+                                                cursor?.size = NSSize(width: cursor?.size.width ?? 0, height: actualNew)
+                                                self.sizeHeight = actualNew
+                                                self.previewRefreshTrigger += 1
+                                            }
+                                        )
+                                    }
+                            }
                         }
                     }
 
                     Divider()
 
-                    LabeledContent("Animation") {
+                    // Hotspot section
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Hotspot")
+                            .font(.headline)
+
+                        HStack(spacing: 16) {
+                            HStack {
+                                Text("X:")
+                                TextField("X", value: $hotspotX, format: .number.precision(.fractionLength(1)))
+                                    .textFieldStyle(.roundedBorder)
+                                    .frame(width: 60)
+                                    .onChange(of: hotspotX) { oldValue, newValue in
+                                        guard !isLoadingValues else { return }
+                                        guard newValue != oldValue else { return }
+                                        let capturedOld = oldValue
+                                        cursor.hotSpot = NSPoint(x: CGFloat(newValue), y: cursor.hotSpot.y)
+                                        previewRefreshTrigger += 1
+                                        appState.registerUndo(
+                                            undo: { [weak cursor] in
+                                                cursor?.hotSpot = NSPoint(x: CGFloat(capturedOld), y: cursor?.hotSpot.y ?? 0)
+                                                self.hotspotX = capturedOld
+                                                self.previewRefreshTrigger += 1
+                                            },
+                                            redo: { [weak cursor] in
+                                                cursor?.hotSpot = NSPoint(x: CGFloat(newValue), y: cursor?.hotSpot.y ?? 0)
+                                                self.hotspotX = newValue
+                                                self.previewRefreshTrigger += 1
+                                            }
+                                        )
+                                    }
+                            }
+                            HStack {
+                                Text("Y:")
+                                TextField("Y", value: $hotspotY, format: .number.precision(.fractionLength(1)))
+                                    .textFieldStyle(.roundedBorder)
+                                    .frame(width: 60)
+                                    .onChange(of: hotspotY) { oldValue, newValue in
+                                        guard !isLoadingValues else { return }
+                                        guard newValue != oldValue else { return }
+                                        let capturedOld = oldValue
+                                        cursor.hotSpot = NSPoint(x: cursor.hotSpot.x, y: CGFloat(newValue))
+                                        previewRefreshTrigger += 1
+                                        appState.registerUndo(
+                                            undo: { [weak cursor] in
+                                                cursor?.hotSpot = NSPoint(x: cursor?.hotSpot.x ?? 0, y: CGFloat(capturedOld))
+                                                self.hotspotY = capturedOld
+                                                self.previewRefreshTrigger += 1
+                                            },
+                                            redo: { [weak cursor] in
+                                                cursor?.hotSpot = NSPoint(x: cursor?.hotSpot.x ?? 0, y: CGFloat(newValue))
+                                                self.hotspotY = newValue
+                                                self.previewRefreshTrigger += 1
+                                            }
+                                        )
+                                    }
+                            }
+                        }
+
+                    }
+
+                    Divider()
+
+                    // Animation section
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Animation")
+                            .font(.headline)
+
                         HStack {
                             Text("Frames:")
                             TextField("Frames", value: $frameCount, format: .number)
@@ -620,65 +696,57 @@ struct CursorDetailView: View {
                                     let capturedOld = oldValue
                                     let actualNew = max(1, newValue)
                                     cursor.frameCount = actualNew
+                                    previewRefreshTrigger += 1
                                     appState.registerUndo(
                                         undo: { [weak cursor] in
                                             cursor?.frameCount = capturedOld
                                             self.frameCount = capturedOld
+                                            self.previewRefreshTrigger += 1
                                         },
                                         redo: { [weak cursor] in
                                             cursor?.frameCount = actualNew
                                             self.frameCount = actualNew
+                                            self.previewRefreshTrigger += 1
                                         }
                                     )
                                 }
-                            Text("Duration:")
-                            TextField("Duration", value: $frameDuration, format: .number.precision(.fractionLength(2)))
+                        }
+
+                        HStack {
+                            Text("FPS:")
+                            TextField("FPS", value: $fps, format: .number.precision(.fractionLength(1)))
                                 .textFieldStyle(.roundedBorder)
-                                .frame(width: 70)
-                                .onChange(of: frameDuration) { oldValue, newValue in
+                                .frame(width: 60)
+                                .onChange(of: fps) { oldValue, newValue in
                                     guard !isLoadingValues else { return }
                                     guard newValue != oldValue else { return }
                                     let capturedOld = oldValue
-                                    let actualNew = max(0, newValue)
-                                    cursor.frameDuration = CGFloat(actualNew)
+                                    let actualNew = max(0.1, newValue)
+                                    let newDuration = 1.0 / actualNew
+                                    cursor.frameDuration = CGFloat(newDuration)
+                                    previewRefreshTrigger += 1
                                     appState.registerUndo(
                                         undo: { [weak cursor] in
-                                            cursor?.frameDuration = CGFloat(capturedOld)
-                                            self.frameDuration = capturedOld
+                                            let oldDuration = capturedOld > 0 ? 1.0 / capturedOld : 0
+                                            cursor?.frameDuration = CGFloat(oldDuration)
+                                            self.fps = capturedOld
+                                            self.previewRefreshTrigger += 1
                                         },
                                         redo: { [weak cursor] in
-                                            cursor?.frameDuration = CGFloat(actualNew)
-                                            self.frameDuration = actualNew
+                                            cursor?.frameDuration = CGFloat(newDuration)
+                                            self.fps = actualNew
+                                            self.previewRefreshTrigger += 1
                                         }
                                     )
                                 }
-                            Text("sec")
+                            Text("frames/sec")
+                                .foregroundStyle(.secondary)
                         }
-                    }
 
-                    if cursor.isAnimated {
-                        Text("Total animation: \(String(format: "%.2f", Double(frameCount) * frameDuration))s")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .padding()
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
-
-                // Resolutions panel
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Text("Resolutions")
-                            .font(.headline)
-                        Spacer()
-                        Text("Drag images to add")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    HStack(spacing: 16) {
-                        ForEach(CursorScale.allCases) { scale in
-                            ResolutionDropZone(scale: scale, cursor: cursor)
+                        if cursor.isAnimated {
+                            Text("Duration: \(String(format: "%.3f", frameDuration))s per frame, \(String(format: "%.2f", Double(frameCount) * frameDuration))s total")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -693,14 +761,25 @@ struct CursorDetailView: View {
         .onChange(of: cursor.id) { _, _ in
             loadCursorValues()
         }
+        .onChange(of: appState.cursorListRefreshTrigger) { _, _ in
+            // Refresh preview and reload values when image is imported
+            previewRefreshTrigger += 1
+            loadCursorValues()
+        }
     }
 
     private func loadCursorValues() {
         isLoadingValues = true
+        sizeWidth = Double(cursor.size.width)
+        sizeHeight = Double(cursor.size.height)
         hotspotX = Double(cursor.hotSpot.x)
         hotspotY = Double(cursor.hotSpot.y)
         frameCount = cursor.frameCount
-        frameDuration = Double(cursor.frameDuration)
+        // Calculate FPS from frame duration
+        let duration = Double(cursor.frameDuration)
+        fps = duration > 0 ? 1.0 / duration : 1.0
+        // Refresh available types
+        availableTypes = calculateAvailableTypes()
         // Load cursor type
         if let type = CursorType(rawValue: cursor.identifier) {
             selectedType = type
@@ -714,57 +793,65 @@ struct CursorDetailView: View {
     }
 }
 
-// MARK: - Resolution Drop Zone
+// MARK: - Cursor Preview Drop Zone (Combined preview + image drop)
 
-struct ResolutionDropZone: View {
-    let scale: CursorScale
+struct CursorPreviewDropZone: View {
     @Bindable var cursor: Cursor
+    var refreshTrigger: Int = 0
     @Environment(AppState.self) private var appState
     @State private var isTargeted = false
     @State private var showFilePicker = false
+    @State private var localRefreshTrigger = 0
+
+    private let targetScale: CursorScale = .scale200  // Always use 2x HiDPI
+
+    /// Check if cursor has any valid image (with non-zero size)
+    private var hasImage: Bool {
+        guard let image = cursor.image else { return false }
+        return image.size.width > 0 && image.size.height > 0
+    }
 
     var body: some View {
-        VStack {
-            Text(scale.displayName)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            // Show representation or placeholder
-            ZStack {
-                if cursor.hasRepresentation(for: scale) {
-                    if let image = cursor.previewImage(size: 64) {
-                        Image(nsImage: image)
-                            .resizable()
-                            .frame(width: 64, height: 64)
-                    }
-
-                    // Remove button overlay
-                    VStack {
-                        HStack {
-                            Spacer()
-                            Button(action: removeRepresentation) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundStyle(.white, .red)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        Spacer()
-                    }
-                    .padding(2)
-                } else {
-                    Image(systemName: "plus")
-                        .font(.title2)
+        ZStack {
+            if hasImage {
+                // Show cursor preview with hotspot
+                AnimatingCursorView(
+                    cursor: cursor,
+                    showHotspot: true,
+                    refreshTrigger: refreshTrigger + localRefreshTrigger,
+                    scale: 1
+                )
+            } else {
+                // Empty state - prompt to add image
+                VStack(spacing: 12) {
+                    Image(systemName: "cursorarrow.rays")
+                        .font(.system(size: 48))
                         .foregroundStyle(.tertiary)
-                        .frame(width: 64, height: 64)
+
+                    Text("Drag image or click to select")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+
+                    Text("Recommended: 64×64 px (HiDPI 2x)")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
                 }
             }
-            .frame(width: 64, height: 64)
+
+            // Drag overlay indicator
+            if isTargeted {
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.accentColor, lineWidth: 3)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.accentColor.opacity(0.1))
+                    )
+            }
         }
-        .padding(8)
-        .glassEffect(
-            isTargeted ? .regular.tint(.accentColor) : .clear,
-            in: RoundedRectangle(cornerRadius: 8)
-        )
+        .frame(height: 200)
+        .frame(maxWidth: .infinity)
+        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
+        .contentShape(Rectangle())
         .onTapGesture {
             showFilePicker = true
         }
@@ -780,7 +867,7 @@ struct ResolutionDropZone: View {
         ) { result in
             handleFileImport(result)
         }
-        .help("Click to select image or drag & drop")
+        .help(hasImage ? "Click or drag to replace image" : "Click or drag to add image")
     }
 
     private func handleURLDrop(_ urls: [URL]) -> Bool {
@@ -800,22 +887,50 @@ struct ResolutionDropZone: View {
     }
 
     private func loadImage(from url: URL) -> Bool {
-        guard url.startAccessingSecurityScopedResource() else { return false }
+        guard url.startAccessingSecurityScopedResource() else {
+            print("Failed to access security scoped resource: \(url)")
+            return false
+        }
         defer { url.stopAccessingSecurityScopedResource() }
 
-        guard let image = NSImage(contentsOf: url) else { return false }
-
-        if let rep = image.representations.first {
-            cursor.setRepresentation(rep, for: scale)
-            appState.markAsChanged()
-            return true
+        guard let image = NSImage(contentsOf: url) else {
+            print("Failed to load image from: \(url)")
+            return false
         }
-        return false
+
+        // Convert to bitmap representation
+        guard let bitmapRep = createBitmapRep(from: image) else {
+            print("Failed to create bitmap rep from image")
+            return false
+        }
+
+        cursor.setRepresentation(bitmapRep, for: targetScale)
+        appState.markAsChanged()
+
+        // Trigger refresh - both local preview and cursor list
+        localRefreshTrigger += 1
+        appState.cursorListRefreshTrigger += 1
+
+        print("Image imported successfully: \(bitmapRep.pixelsWide)x\(bitmapRep.pixelsHigh)")
+        return true
     }
 
-    private func removeRepresentation() {
-        cursor.removeRepresentation(for: scale)
-        appState.markAsChanged()
+    /// Convert NSImage to NSBitmapImageRep
+    private func createBitmapRep(from image: NSImage) -> NSBitmapImageRep? {
+        // First try to get existing bitmap rep
+        for rep in image.representations {
+            if let bitmapRep = rep as? NSBitmapImageRep {
+                return bitmapRep
+            }
+        }
+
+        // Create new bitmap by drawing the image
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            return nil
+        }
+
+        let bitmapRep = NSBitmapImageRep(cgImage: cgImage)
+        return bitmapRep
     }
 }
 
