@@ -330,8 +330,7 @@ struct AdvancedSettingsView: View {
     }
 
     private func checkForUpdates() {
-        // Trigger Sparkle update check if available
-        // For now, open the releases page
+        // Open GitHub releases page for manual update checking
         if let url = URL(string: "https://github.com/alexzielenski/Mousecape/releases") {
             NSWorkspace.shared.open(url)
         }
