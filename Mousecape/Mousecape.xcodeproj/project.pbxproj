@@ -1356,6 +1356,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "Mousecape/Mousecape-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
 				WRAPPER_EXTENSION = app;
 			};
@@ -1414,6 +1415,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
@@ -1480,6 +1482,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
@@ -1532,7 +1535,7 @@
 				FAC69F91189D603C00BC829D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		FAC69F92189D603C00BC829D /* Build configuration list for PBXNativeTarget "Mousecape" */ = {
 			isa = XCConfigurationList;
@@ -1541,7 +1544,7 @@
 				FAC69F94189D603C00BC829D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		FAC69FB6189D608A00BC829D /* Build configuration list for PBXNativeTarget "mousecloak" */ = {
 			isa = XCConfigurationList;
@@ -1550,7 +1553,7 @@
 				FAC69FB8189D608A00BC829D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		FAE5D56719526F82007620DE /* Build configuration list for PBXNativeTarget "com.alexzielenski.mousecloakhelper" */ = {
 			isa = XCConfigurationList;
@@ -1559,7 +1562,7 @@
 				FAE5D56419526F82007620DE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};

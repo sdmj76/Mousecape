@@ -124,5 +124,6 @@ struct CursorPreviewCell: View {
 #Preview {
     CapePreviewPanel(cape: CursorLibrary(name: "Preview Cape", author: "Test"))
         .environment(AppState.shared)
+        .environment(LocalizationManager.shared)
         .frame(width: 500, height: 400)
 }

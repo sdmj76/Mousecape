@@ -329,5 +329,6 @@ struct AdvancedSettingsView: View {
 #Preview {
     SettingsView()
         .environment(AppState.shared)
+        .environment(LocalizationManager.shared)
         .frame(width: 600, height: 500)
 }

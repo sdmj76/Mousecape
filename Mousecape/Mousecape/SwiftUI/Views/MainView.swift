@@ -121,4 +121,5 @@ struct MainView: View {
 #Preview {
     MainView()
         .environment(AppState.shared)
+        .environment(LocalizationManager.shared)
 }

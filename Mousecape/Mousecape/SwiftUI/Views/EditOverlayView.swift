@@ -707,4 +707,5 @@ struct HelperToolSettingsView: View {
 #Preview {
     EditOverlayView(cape: CursorLibrary(name: "Test Cape", author: "Test"))
         .environment(AppState.shared)
+        .environment(LocalizationManager.shared)
 }

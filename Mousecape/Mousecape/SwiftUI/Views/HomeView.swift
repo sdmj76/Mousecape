@@ -188,4 +188,5 @@ struct CapeIconCell: View {
 #Preview {
     HomeView()
         .environment(AppState.shared)
+        .environment(LocalizationManager.shared)
 }

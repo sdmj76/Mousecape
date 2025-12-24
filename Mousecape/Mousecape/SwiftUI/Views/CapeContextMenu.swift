@@ -70,4 +70,5 @@ struct CapeContextMenu: View {
         CapeContextMenu(cape: CursorLibrary(name: "Test Cape", author: "Test"))
     }
     .environment(AppState.shared)
+    .environment(LocalizationManager.shared)
 }
