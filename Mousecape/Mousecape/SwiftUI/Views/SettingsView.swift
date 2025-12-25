@@ -22,23 +22,10 @@ struct SettingsView: View {
             }
             .listStyle(.sidebar)
             .navigationSplitViewColumnWidth(min: 150, ideal: 180, max: 220)
-            .toolbar(removing: .sidebarToggle)
         } detail: {
             // Right: Settings content based on selected category
             settingsContent
                 .transition(.opacity.animation(.easeInOut(duration: 0.2)))
-        }
-        .toolbar(removing: .sidebarToggle)
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button {
-                    withAnimation {
-                        columnVisibility = columnVisibility == .all ? .detailOnly : .all
-                    }
-                } label: {
-                    Image(systemName: "sidebar.leading")
-                }
-            }
         }
     }
 

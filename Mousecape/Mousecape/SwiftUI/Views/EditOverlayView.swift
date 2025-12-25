@@ -9,27 +9,26 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-// MARK: - Edit Detail View (for right panel only, with cursor list)
+// MARK: - Edit Detail Content (right panel content only, used in HomeView)
 
-struct EditDetailView: View {
+struct EditDetailContent: View {
     let cape: CursorLibrary
     @Environment(AppState.self) private var appState
 
     var body: some View {
-        @Bindable var appState = appState
-
-        HSplitView {
-            // Left: Cursor list
-            CursorListView(
-                cape: cape,
-                selection: $appState.editingSelectedCursor
-            )
-            .frame(minWidth: 180, idealWidth: 220, maxWidth: 280)
-
-            // Right: Detail content
-            detailContent
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .frame(minWidth: 300)
+        Group {
+            if appState.showCapeInfo {
+                CapeInfoView(cape: cape)
+            } else if let cursor = appState.editingSelectedCursor {
+                CursorDetailView(cursor: cursor, cape: cape)
+                    .id(cursor.id)  // Force view recreation when cursor changes
+            } else {
+                ContentUnavailableView(
+                    "Select a Cursor",
+                    systemImage: "cursorarrow.click",
+                    description: Text("Choose a cursor from the list to edit")
+                )
+            }
         }
         .onAppear {
             // Invalidate cache to ensure we get fresh cursor data
@@ -39,21 +38,60 @@ struct EditDetailView: View {
                 appState.editingSelectedCursor = cape.cursors.first
             }
         }
-    }
+        // Edit mode toolbar (Landmarks-style layout)
+        .toolbar {
+            // Back button on the left
+            ToolbarItem(placement: .cancellationAction) {
+                Button(action: {
+                    appState.requestCloseEdit()
+                }) {
+                    Label("Back", systemImage: "chevron.left")
+                }
+                .help("Back")
+            }
 
-    @ViewBuilder
-    private var detailContent: some View {
-        if appState.showCapeInfo {
-            CapeInfoView(cape: cape)
-        } else if let cursor = appState.editingSelectedCursor {
-            CursorDetailView(cursor: cursor, cape: cape)
-                .id(cursor.id)  // Force view recreation when cursor changes
-        } else {
-            ContentUnavailableView(
-                "Select a Cursor",
-                systemImage: "cursorarrow.click",
-                description: Text("Choose a cursor from the list to edit")
-            )
+            // Flexible spacer pushes buttons to the right
+            ToolbarSpacer(.flexible)
+
+            // Main action buttons group (like Landmarks' favorite/collections)
+            ToolbarItemGroup {
+                Button(action: {
+                    appState.showAddCursorSheet = true
+                }) {
+                    Image(systemName: "plus")
+                }
+                .help("Add Cursor")
+
+                Button(action: {
+                    appState.showDeleteCursorConfirmation = true
+                }) {
+                    Image(systemName: "minus")
+                }
+                .help("Delete Cursor")
+                .disabled(appState.editingSelectedCursor == nil)
+
+                Button(action: {
+                    appState.saveCape(cape)
+                }) {
+                    Image(systemName: "square.and.arrow.down")
+                }
+                .help("Save")
+            }
+
+            ToolbarSpacer(.fixed)
+
+            // Info button (rightmost, like Landmarks' Info button)
+            ToolbarItem {
+                Button(action: {
+                    appState.showCapeInfo.toggle()
+                    if appState.showCapeInfo {
+                        appState.editingSelectedCursor = nil
+                    }
+                }) {
+                    Image(systemName: appState.showCapeInfo ? "info.circle.fill" : "info.circle")
+                }
+                .help("Cape Info")
+            }
         }
     }
 }
