@@ -32,6 +32,8 @@ struct EditDetailView: View {
                 .frame(minWidth: 300)
         }
         .onAppear {
+            // Invalidate cache to ensure we get fresh cursor data
+            cape.invalidateCursorCache()
             // Select first cursor when opening
             if appState.editingSelectedCursor == nil {
                 appState.editingSelectedCursor = cape.cursors.first
@@ -77,6 +79,8 @@ struct EditOverlayView: View {
             detailContent
         }
         .onAppear {
+            // Invalidate cache to ensure we get fresh cursor data
+            cape.invalidateCursorCache()
             // Select first cursor when opening
             if appState.editingSelectedCursor == nil {
                 appState.editingSelectedCursor = cape.cursors.first

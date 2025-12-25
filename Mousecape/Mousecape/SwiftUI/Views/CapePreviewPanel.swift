@@ -7,10 +7,16 @@
 
 import SwiftUI
 
+// MARK: - Preview Scale Constants
+
+/// Scale factor for cursor previews in the preview panel
+private let previewPanelScale: CGFloat = 1.5
+
 struct CapePreviewPanel: View {
     let cape: CursorLibrary
     @Environment(AppState.self) private var appState
     @State private var zoomedCursor: Cursor?
+    @State private var cachedCursors: [Cursor] = []
     @Namespace private var cursorNamespace
 
     private var isApplied: Bool {
@@ -47,7 +53,7 @@ struct CapePreviewPanel: View {
                 // Middle: Cursor preview grid (auto-wrapping)
                 ScrollView {
                     CursorFlowGrid(
-                        cursors: cape.cursors,
+                        cursors: cachedCursors,
                         zoomedCursor: zoomedCursor,
                         namespace: cursorNamespace
                     ) { cursor in
@@ -82,6 +88,20 @@ struct CapePreviewPanel: View {
                 }
             }
         }
+        .onAppear {
+            refreshCursors()
+        }
+        .onChange(of: cape.id) { _, _ in
+            refreshCursors()
+        }
+        .onChange(of: appState.capeListRefreshTrigger) { _, _ in
+            refreshCursors()
+        }
+    }
+
+    private func refreshCursors() {
+        cape.invalidateCursorCache()
+        cachedCursors = cape.cursors
     }
 }
 
@@ -103,6 +123,7 @@ struct CursorZoomOverlay: View {
     let cursor: Cursor
     let namespace: Namespace.ID
     let onDismiss: () -> Void
+    var showHotspot: Bool = false
 
     @State private var showDetails = false
 
@@ -117,7 +138,7 @@ struct CursorZoomOverlay: View {
 
             // Centered zoomed cursor with matched geometry
             VStack(spacing: 16) {
-                AnimatingCursorView(cursor: cursor, showHotspot: true)
+                AnimatingCursorView(cursor: cursor, showHotspot: showHotspot, scale: 3)
                     .frame(width: 128, height: 128)
                     .matchedGeometryEffect(id: cursor.id, in: namespace)
 
@@ -179,7 +200,7 @@ struct CursorFlowGrid: View {
     }
 
     private let columns = [
-        GridItem(.adaptive(minimum: 64, maximum: 80), spacing: 24)
+        GridItem(.adaptive(minimum: 80, maximum: 100), spacing: 24)
     ]
 
     var body: some View {
@@ -222,13 +243,17 @@ struct CursorPreviewCell: View {
         VStack(spacing: 4) {
             // Only show cursor here if not zoomed (it moves to overlay)
             if !isZoomed {
-                AnimatingCursorView(cursor: cursor, showHotspot: false)
-                    .frame(width: 48, height: 48)
-                    .matchedGeometryEffect(id: cursor.id, in: namespace)
+                AnimatingCursorView(
+                    cursor: cursor,
+                    showHotspot: false,
+                    scale: previewPanelScale
+                )
+                .frame(width: 64, height: 64)
+                .matchedGeometryEffect(id: cursor.id, in: namespace)
             } else {
                 // Placeholder to maintain layout
                 Color.clear
-                    .frame(width: 48, height: 48)
+                    .frame(width: 64, height: 64)
             }
 
             if !isZoomed {

@@ -22,10 +22,22 @@ final class Cursor: Identifiable, Hashable {
     }
 
     var name: String {
-        objcCursor.name ?? identifier.components(separatedBy: ".").last ?? "Unknown"
+        // First try ObjC cursor name
+        if let objcName = objcCursor.name, !objcName.isEmpty {
+            return objcName
+        }
+        // Then try to extract from identifier
+        if !identifier.isEmpty, let lastName = identifier.components(separatedBy: ".").last, !lastName.isEmpty {
+            return lastName
+        }
+        return "Unknown"
     }
 
     var displayName: String {
+        // First check if we have a known cursor type - use its display name
+        if let type = CursorType(rawValue: identifier) {
+            return type.displayName
+        }
         // Clean up the name for display
         let baseName = name
         // Convert camelCase to Title Case with spaces

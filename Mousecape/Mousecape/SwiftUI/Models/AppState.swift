@@ -49,6 +49,9 @@ final class AppState: @unchecked Sendable {
     /// Refresh trigger for cape info (file name display)
     var capeInfoRefreshTrigger: Int = 0
 
+    /// Refresh trigger for cape list/grid (increment to force refresh)
+    var capeListRefreshTrigger: Int = 0
+
     /// Show add cursor sheet
     var showAddCursorSheet: Bool = false
 
@@ -260,6 +263,8 @@ final class AppState: @unchecked Sendable {
 
     /// Edit a cape
     func editCape(_ cape: CursorLibrary) {
+        // Invalidate cursor cache to ensure fresh data when entering edit mode
+        cape.invalidateCursorCache()
         editingCape = cape
         isEditing = true
         hasUnsavedChanges = false
@@ -346,9 +351,11 @@ final class AppState: @unchecked Sendable {
             guard saveCape(cape) else { return }
             // Invalidate cursor cache to ensure fresh data on next access
             cape.invalidateCursorCache()
-            // Keep this cape selected after closing edit
-            selectedCape = cape
         }
+
+        // Remember the cape we just edited (by its underlying ObjC object)
+        let savedObjcCape = editingCape?.underlyingLibrary
+
         isEditing = false
         editingCape = nil
         editingSelectedCursor = nil
@@ -356,9 +363,18 @@ final class AppState: @unchecked Sendable {
         showDiscardConfirmation = false
         hasUnsavedChanges = false
         clearUndoHistory()
+
         // Reload capes to refresh the list with latest data
         // This will find the new wrapper for the same ObjC object
         loadCapes()
+
+        // Select the cape we just saved (find its new wrapper)
+        if let savedObjcCape = savedObjcCape {
+            selectedCape = capes.first { $0.underlyingLibrary === savedObjcCape }
+        }
+
+        // Force UI refresh for cape list and preview panel
+        capeListRefreshTrigger += 1
     }
 
     /// Save the currently editing cape

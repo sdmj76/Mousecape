@@ -7,6 +7,11 @@
 
 import SwiftUI
 
+// MARK: - Preview Scale Constants
+
+/// Scale factor for cursor previews in left sidebar grid
+private let sidebarPreviewScale: CGFloat = 1
+
 struct HomeView: View {
     @Environment(AppState.self) private var appState
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
@@ -163,9 +168,13 @@ struct CapeIconCell: View {
         VStack(spacing: 6) {
             // Cursor preview
             ZStack {
-                if let previewCursor = cape.previewCursor {
-                    AnimatingCursorView(cursor: previewCursor, showHotspot: false)
-                        .frame(width: 48, height: 48)
+                if let cursor = cape.previewCursor {
+                    AnimatingCursorView(
+                        cursor: cursor,
+                        showHotspot: false,
+                        scale: sidebarPreviewScale
+                    )
+                    .frame(width: 48, height: 48)
                 } else {
                     Image(systemName: "cursorarrow.slash")
                         .font(.title)
