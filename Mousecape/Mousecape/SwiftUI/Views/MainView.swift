@@ -54,6 +54,7 @@ struct MainView: View {
                 if appState.isEditing, let cape = appState.editingCape {
                     Text("Edit: \(cape.name)")
                         .font(.headline)
+                        .id("title-\(cape.name)-\(appState.capeInfoRefreshTrigger)")  // Force refresh after save
                 } else {
                     Spacer()
                 }
@@ -205,6 +206,39 @@ struct MainView: View {
             if let cursor = appState.editingSelectedCursor {
                 Text("Are you sure you want to delete '\(cursor.displayName)'?")
             }
+        }
+        // Duplicate filename error alert
+        .alert(
+            localization.localized("Duplicate Filename"),
+            isPresented: $appState.showDuplicateFilenameError
+        ) {
+            Button(localization.localized("OK"), role: .cancel) {
+                appState.showDuplicateFilenameError = false
+            }
+        } message: {
+            Text("\(localization.localized("A cape with the filename")) \"\(appState.duplicateFilename)\" \(localization.localized("already exists. Please change the Name or Author to use a different filename."))")
+        }
+        // Validation error alert
+        .alert(
+            localization.localized("Validation Error"),
+            isPresented: $appState.showValidationError
+        ) {
+            Button(localization.localized("OK"), role: .cancel) {
+                appState.showValidationError = false
+            }
+        } message: {
+            Text(appState.validationErrorMessage)
+        }
+        // Image import warning alert (non-square image)
+        .alert(
+            localization.localized("Image Adjusted"),
+            isPresented: $appState.showImageImportWarning
+        ) {
+            Button(localization.localized("OK"), role: .cancel) {
+                appState.showImageImportWarning = false
+            }
+        } message: {
+            Text(appState.imageImportWarningMessage)
         }
         // Add cursor sheet
         .sheet(isPresented: $appState.showAddCursorSheet) {

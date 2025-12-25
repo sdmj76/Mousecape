@@ -46,6 +46,9 @@ final class AppState: @unchecked Sendable {
     /// Refresh trigger for cursor list (increment to force refresh)
     var cursorListRefreshTrigger: Int = 0
 
+    /// Refresh trigger for cape info (file name display)
+    var capeInfoRefreshTrigger: Int = 0
+
     /// Show add cursor sheet
     var showAddCursorSheet: Bool = false
 
@@ -58,6 +61,18 @@ final class AppState: @unchecked Sendable {
 
     /// Discard changes confirmation state
     var showDiscardConfirmation: Bool = false
+
+    /// Duplicate filename error state
+    var showDuplicateFilenameError: Bool = false
+    var duplicateFilename: String = ""
+
+    /// Validation error state
+    var showValidationError: Bool = false
+    var validationErrorMessage: String = ""
+
+    /// Image import warning state (for non-square images)
+    var showImageImportWarning: Bool = false
+    var imageImportWarningMessage: String = ""
 
     /// Loading state
     var isLoading: Bool = false
@@ -115,15 +130,26 @@ final class AppState: @unchecked Sendable {
     private func loadCapes() {
         guard let controller = libraryController else { return }
 
+        // Remember current selections by their underlying ObjC objects
+        let selectedObjc = selectedCape?.underlyingLibrary
+        let appliedObjc = appliedCape?.underlyingLibrary
+
         // Load capes from the ObjC controller
         if let objcCapes = controller.capes as? Set<MCCursorLibrary> {
             capes = objcCapes.map { CursorLibrary(objcLibrary: $0) }
             capes.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
         }
 
-        // Check for applied cape
+        // Restore selections by finding wrappers for the same ObjC objects
+        if let selectedObjc = selectedObjc {
+            selectedCape = capes.first { $0.underlyingLibrary === selectedObjc }
+        }
+
+        // Check for applied cape (from controller or previously tracked)
         if let applied = controller.appliedCape {
             appliedCape = capes.first { $0.underlyingLibrary === applied }
+        } else if let appliedObjc = appliedObjc {
+            appliedCape = capes.first { $0.underlyingLibrary === appliedObjc }
         }
     }
 
@@ -135,7 +161,12 @@ final class AppState: @unchecked Sendable {
 
     /// Create a new empty cape
     func createNewCape() {
-        let newCape = CursorLibrary(name: "New Cape", author: NSFullUserName())
+        let author = NSFullUserName()
+        let baseName = "New Cape"
+
+        // Find unique name by adding suffix if needed
+        let uniqueName = findUniqueName(baseName: baseName, author: author)
+        let newCape = CursorLibrary(name: uniqueName, author: author)
 
         // Set file URL before adding to library (required for save/delete)
         if let libraryURL = libraryController?.libraryURL {
@@ -147,7 +178,40 @@ final class AppState: @unchecked Sendable {
 
         addCape(newCape)
         selectedCape = newCape
+        capeInfoRefreshTrigger += 1  // Refresh file name display
         editCape(newCape)
+    }
+
+    /// Find a unique name by adding suffix (1), (2), etc. if needed
+    private func findUniqueName(baseName: String, author: String) -> String {
+        var name = baseName
+        var counter = 1
+
+        while isIdentifierExists(name: name, author: author) {
+            name = "\(baseName) (\(counter))"
+            counter += 1
+        }
+
+        return name
+    }
+
+    /// Check if a cape with the given name/author combination already exists
+    private func isIdentifierExists(name: String, author: String, excludingCape: CursorLibrary? = nil) -> Bool {
+        let identifier = generateIdentifier(name: name, author: author)
+
+        // Check existing files
+        if let libraryURL = libraryController?.libraryURL {
+            let fileURL = libraryURL.appendingPathComponent("\(identifier).cape")
+            if FileManager.default.fileExists(atPath: fileURL.path) {
+                // If we're excluding a cape and its fileURL matches, it's not a conflict
+                if let excluding = excludingCape, excluding.fileURL == fileURL {
+                    return false
+                }
+                return true
+            }
+        }
+
+        return false
     }
 
     /// Import a cape from URL
@@ -199,6 +263,7 @@ final class AppState: @unchecked Sendable {
         editingCape = cape
         isEditing = true
         hasUnsavedChanges = false
+        capeInfoRefreshTrigger += 1  // Refresh file name display
         clearUndoHistory()
     }
 
@@ -277,7 +342,12 @@ final class AppState: @unchecked Sendable {
     /// Close edit mode after saving
     func closeEditWithSave() {
         if let cape = editingCape {
-            saveCape(cape)
+            // Only close if save succeeds
+            guard saveCape(cape) else { return }
+            // Invalidate cursor cache to ensure fresh data on next access
+            cape.invalidateCursorCache()
+            // Keep this cape selected after closing edit
+            selectedCape = cape
         }
         isEditing = false
         editingCape = nil
@@ -286,18 +356,66 @@ final class AppState: @unchecked Sendable {
         showDiscardConfirmation = false
         hasUnsavedChanges = false
         clearUndoHistory()
+        // Reload capes to refresh the list with latest data
+        // This will find the new wrapper for the same ObjC object
+        loadCapes()
     }
 
     /// Save the currently editing cape
-    func saveCape(_ cape: CursorLibrary) {
+    /// Returns true if save was successful, false if blocked by validation or duplicate filename
+    @discardableResult
+    func saveCape(_ cape: CursorLibrary) -> Bool {
+        // Validate all fields first
+        guard validateBeforeSave() else { return false }
+
+        // Generate new identifier based on current Name and Author
+        let newIdentifier = generateIdentifier(name: cape.name, author: cape.author)
+
+        // Check for duplicate filename (excluding current cape)
+        if isIdentifierExists(name: cape.name, author: cape.author, excludingCape: cape) {
+            duplicateFilename = "\(newIdentifier).cape"
+            showDuplicateFilenameError = true
+            return false
+        }
+
         do {
+            // Update identifier and fileURL if changed
+            if let libraryURL = libraryController?.libraryURL {
+                let oldFileURL = cape.fileURL
+                let newFileURL = libraryURL.appendingPathComponent("\(newIdentifier).cape")
+
+                // If filename will change, delete old file and update URL
+                if oldFileURL != newFileURL {
+                    // Delete old file if it exists
+                    if let oldURL = oldFileURL {
+                        try? FileManager.default.removeItem(at: oldURL)
+                    }
+                    cape.fileURL = newFileURL
+                }
+
+                // Update identifier
+                cape.identifier = newIdentifier
+            }
+
             try cape.save()
             hasUnsavedChanges = false
+            capeInfoRefreshTrigger += 1  // Refresh file name display
             clearUndoHistory()  // Clear undo history after save
+            // Invalidate cursor cache to ensure fresh data
+            cape.invalidateCursorCache()
+            return true
         } catch {
             lastError = error
             showError = true
+            return false
         }
+    }
+
+    /// Generate identifier from name and author
+    private func generateIdentifier(name: String, author: String) -> String {
+        let sanitizedAuthor = CursorLibrary.sanitizeIdentifierComponent(author.isEmpty ? "Unknown" : author)
+        let sanitizedName = CursorLibrary.sanitizeIdentifierComponent(name.isEmpty ? "Untitled" : name)
+        return "local.\(sanitizedAuthor).\(sanitizedName)"
     }
 
     /// Export a cape to file
@@ -406,6 +524,73 @@ final class AppState: @unchecked Sendable {
     func openCapeFolder() {
         guard let url = libraryController?.libraryURL else { return }
         NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: url.path)
+    }
+
+    // MARK: - Validation
+
+    /// Characters allowed in Name and Author fields
+    /// Allows alphanumerics, spaces, and some safe punctuation
+    static let allowedNameCharacters = CharacterSet.alphanumerics
+        .union(CharacterSet(charactersIn: " -_()"))
+
+    /// Check if a string is valid for Name/Author fields
+    static func isValidNameOrAuthor(_ string: String) -> Bool {
+        guard !string.isEmpty else { return false }
+        return string.unicodeScalars.allSatisfy { allowedNameCharacters.contains($0) }
+    }
+
+    /// Filter a string to only contain valid Name/Author characters
+    static func filterNameOrAuthor(_ string: String) -> String {
+        String(string.unicodeScalars.filter { allowedNameCharacters.contains($0) })
+    }
+
+    /// Validate all fields before saving
+    /// Returns true if valid, false if validation failed (shows error alert)
+    func validateBeforeSave() -> Bool {
+        guard let cape = editingCape else { return false }
+
+        var errors: [String] = []
+
+        // Validate cape name
+        if cape.name.trimmingCharacters(in: .whitespaces).isEmpty {
+            errors.append("Name cannot be empty")
+        }
+
+        // Validate cape author
+        if cape.author.trimmingCharacters(in: .whitespaces).isEmpty {
+            errors.append("Author cannot be empty")
+        }
+
+        // Validate cape version
+        if cape.version <= 0 {
+            errors.append("Version must be greater than 0")
+        }
+
+        // Validate ALL cursor fields (not just selected cursor)
+        for cursor in cape.cursors {
+            let cursorName = cursor.displayName
+
+            if cursor.size.width <= 0 || cursor.size.height <= 0 {
+                errors.append("[\(cursorName)] Size must be greater than 0")
+            }
+            if cursor.frameCount <= 0 {
+                errors.append("[\(cursorName)] Frame count must be at least 1")
+            }
+            if cursor.frameDuration < 0 {
+                errors.append("[\(cursorName)] Frame duration cannot be negative")
+            }
+            if cursor.hotSpot.x < 0 || cursor.hotSpot.y < 0 {
+                errors.append("[\(cursorName)] Hotspot cannot be negative")
+            }
+        }
+
+        if !errors.isEmpty {
+            validationErrorMessage = errors.joined(separator: "\n")
+            showValidationError = true
+            return false
+        }
+
+        return true
     }
 }
 

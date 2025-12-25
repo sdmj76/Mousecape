@@ -107,6 +107,26 @@ struct CapeInfoView: View {
     @Bindable var cape: CursorLibrary
     @Environment(AppState.self) private var appState
 
+    /// Current filename from fileURL
+    private var currentFilename: String {
+        cape.fileURL?.lastPathComponent ?? "\(cape.identifier).cape"
+    }
+
+    /// Check if name is valid (not empty)
+    private var isNameValid: Bool {
+        !cape.name.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    /// Check if author is valid (not empty)
+    private var isAuthorValid: Bool {
+        !cape.author.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    /// Check if version is valid (> 0)
+    private var isVersionValid: Bool {
+        cape.version > 0
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
@@ -119,34 +139,46 @@ struct CapeInfoView: View {
                         TextField("Cape Name", text: Binding(
                             get: { cape.name },
                             set: { newValue in
+                                // Filter to only allow valid filename characters
+                                let filtered = AppState.filterNameOrAuthor(newValue)
                                 let oldValue = cape.name
-                                guard newValue != oldValue else { return }
-                                cape.name = newValue
+                                guard filtered != oldValue else { return }
+                                cape.name = filtered
                                 appState.registerUndo(
                                     undo: { [weak cape] in cape?.name = oldValue },
-                                    redo: { [weak cape] in cape?.name = newValue }
+                                    redo: { [weak cape] in cape?.name = filtered }
                                 )
                             }
                         ))
                         .textFieldStyle(.roundedBorder)
                         .frame(maxWidth: 300)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 5)
+                                .stroke(isNameValid ? Color.clear : Color.red, lineWidth: 2)
+                        )
                     }
 
                     LabeledContent("Author") {
                         TextField("Author", text: Binding(
                             get: { cape.author },
                             set: { newValue in
+                                // Filter to only allow valid filename characters
+                                let filtered = AppState.filterNameOrAuthor(newValue)
                                 let oldValue = cape.author
-                                guard newValue != oldValue else { return }
-                                cape.author = newValue
+                                guard filtered != oldValue else { return }
+                                cape.author = filtered
                                 appState.registerUndo(
                                     undo: { [weak cape] in cape?.author = oldValue },
-                                    redo: { [weak cape] in cape?.author = newValue }
+                                    redo: { [weak cape] in cape?.author = filtered }
                                 )
                             }
                         ))
                         .textFieldStyle(.roundedBorder)
                         .frame(maxWidth: 300)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 5)
+                                .stroke(isAuthorValid ? Color.clear : Color.red, lineWidth: 2)
+                        )
                     }
 
                     LabeledContent("Version") {
@@ -154,34 +186,22 @@ struct CapeInfoView: View {
                             get: { cape.version },
                             set: { newValue in
                                 let oldValue = cape.version
-                                guard newValue != oldValue else { return }
-                                cape.version = newValue
+                                // Ensure version is at least 0.1
+                                let validValue = max(0.1, newValue)
+                                guard validValue != oldValue else { return }
+                                cape.version = validValue
                                 appState.registerUndo(
                                     undo: { [weak cape] in cape?.version = oldValue },
-                                    redo: { [weak cape] in cape?.version = newValue }
+                                    redo: { [weak cape] in cape?.version = validValue }
                                 )
                             }
                         ), format: .number)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 80)
-                    }
-
-                    LabeledContent("Identifier") {
-                        TextField("Identifier", text: Binding(
-                            get: { cape.identifier },
-                            set: { newValue in
-                                let oldValue = cape.identifier
-                                guard newValue != oldValue else { return }
-                                cape.identifier = newValue
-                                appState.registerUndo(
-                                    undo: { [weak cape] in cape?.identifier = oldValue },
-                                    redo: { [weak cape] in cape?.identifier = newValue }
-                                )
-                            }
-                        ))
-                        .textFieldStyle(.roundedBorder)
-                        .frame(maxWidth: 300)
-                        .font(.system(.body, design: .monospaced))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 5)
+                                .stroke(isVersionValid ? Color.clear : Color.red, lineWidth: 2)
+                        )
                     }
 
                     Divider()
@@ -191,12 +211,12 @@ struct CapeInfoView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    if let url = cape.fileURL {
-                        LabeledContent("File") {
-                            Text(url.lastPathComponent)
-                                .foregroundStyle(.secondary)
-                                .font(.caption)
-                        }
+                    LabeledContent("File") {
+                        // Show current filename (updates after save)
+                        Text(currentFilename)
+                            .foregroundStyle(.secondary)
+                            .font(.system(.caption, design: .monospaced))
+                            .id(appState.capeInfoRefreshTrigger)  // Force refresh when triggered
                     }
                 }
                 .padding()
@@ -464,8 +484,6 @@ struct CursorDetailView: View {
     @Bindable var cursor: Cursor
     let cape: CursorLibrary
     @Environment(AppState.self) private var appState
-    @State private var sizeWidth: Double = 0
-    @State private var sizeHeight: Double = 0
     @State private var hotspotX: Double = 0
     @State private var hotspotY: Double = 0
     @State private var frameCount: Int = 1
@@ -474,6 +492,20 @@ struct CursorDetailView: View {
     @State private var selectedType: CursorType = .arrow
     @State private var previewRefreshTrigger: Int = 0  // Force preview refresh
     @State private var availableTypes: [CursorType] = CursorType.allCases
+
+    // MARK: - Validation
+
+    /// Check if hotspot X is valid (>= 0)
+    private var isHotspotXValid: Bool { hotspotX >= 0 }
+
+    /// Check if hotspot Y is valid (>= 0)
+    private var isHotspotYValid: Bool { hotspotY >= 0 }
+
+    /// Check if frame count is valid (>= 1)
+    private var isFrameCountValid: Bool { frameCount >= 1 }
+
+    /// Check if FPS is valid (> 0)
+    private var isFPSValid: Bool { fps > 0 }
 
     // Calculate available cursor types (current type + types not used by other cursors)
     private func calculateAvailableTypes() -> [CursorType] {
@@ -555,69 +587,6 @@ struct CursorDetailView: View {
 
                     Divider()
 
-                    // Size section
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Size")
-                            .font(.headline)
-
-                        HStack(spacing: 16) {
-                            HStack {
-                                Text("W:")
-                                TextField("Width", value: $sizeWidth, format: .number.precision(.fractionLength(0)))
-                                    .textFieldStyle(.roundedBorder)
-                                    .frame(width: 60)
-                                    .onChange(of: sizeWidth) { oldValue, newValue in
-                                        guard !isLoadingValues else { return }
-                                        guard newValue != oldValue else { return }
-                                        let capturedOld = oldValue
-                                        let actualNew = max(1, newValue)
-                                        cursor.size = NSSize(width: actualNew, height: cursor.size.height)
-                                        previewRefreshTrigger += 1
-                                        appState.registerUndo(
-                                            undo: { [weak cursor] in
-                                                cursor?.size = NSSize(width: capturedOld, height: cursor?.size.height ?? 0)
-                                                self.sizeWidth = capturedOld
-                                                self.previewRefreshTrigger += 1
-                                            },
-                                            redo: { [weak cursor] in
-                                                cursor?.size = NSSize(width: actualNew, height: cursor?.size.height ?? 0)
-                                                self.sizeWidth = actualNew
-                                                self.previewRefreshTrigger += 1
-                                            }
-                                        )
-                                    }
-                            }
-                            HStack {
-                                Text("H:")
-                                TextField("Height", value: $sizeHeight, format: .number.precision(.fractionLength(0)))
-                                    .textFieldStyle(.roundedBorder)
-                                    .frame(width: 60)
-                                    .onChange(of: sizeHeight) { oldValue, newValue in
-                                        guard !isLoadingValues else { return }
-                                        guard newValue != oldValue else { return }
-                                        let capturedOld = oldValue
-                                        let actualNew = max(1, newValue)
-                                        cursor.size = NSSize(width: cursor.size.width, height: actualNew)
-                                        previewRefreshTrigger += 1
-                                        appState.registerUndo(
-                                            undo: { [weak cursor] in
-                                                cursor?.size = NSSize(width: cursor?.size.width ?? 0, height: capturedOld)
-                                                self.sizeHeight = capturedOld
-                                                self.previewRefreshTrigger += 1
-                                            },
-                                            redo: { [weak cursor] in
-                                                cursor?.size = NSSize(width: cursor?.size.width ?? 0, height: actualNew)
-                                                self.sizeHeight = actualNew
-                                                self.previewRefreshTrigger += 1
-                                            }
-                                        )
-                                    }
-                            }
-                        }
-                    }
-
-                    Divider()
-
                     // Hotspot section
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Hotspot")
@@ -629,11 +598,16 @@ struct CursorDetailView: View {
                                 TextField("X", value: $hotspotX, format: .number.precision(.fractionLength(1)))
                                     .textFieldStyle(.roundedBorder)
                                     .frame(width: 60)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 5)
+                                            .stroke(isHotspotXValid ? Color.clear : Color.red, lineWidth: 2)
+                                    )
                                     .onChange(of: hotspotX) { oldValue, newValue in
                                         guard !isLoadingValues else { return }
                                         guard newValue != oldValue else { return }
                                         let capturedOld = oldValue
-                                        cursor.hotSpot = NSPoint(x: CGFloat(newValue), y: cursor.hotSpot.y)
+                                        let actualNew = max(0, newValue)
+                                        cursor.hotSpot = NSPoint(x: CGFloat(actualNew), y: cursor.hotSpot.y)
                                         previewRefreshTrigger += 1
                                         appState.registerUndo(
                                             undo: { [weak cursor] in
@@ -642,8 +616,8 @@ struct CursorDetailView: View {
                                                 self.previewRefreshTrigger += 1
                                             },
                                             redo: { [weak cursor] in
-                                                cursor?.hotSpot = NSPoint(x: CGFloat(newValue), y: cursor?.hotSpot.y ?? 0)
-                                                self.hotspotX = newValue
+                                                cursor?.hotSpot = NSPoint(x: CGFloat(actualNew), y: cursor?.hotSpot.y ?? 0)
+                                                self.hotspotX = actualNew
                                                 self.previewRefreshTrigger += 1
                                             }
                                         )
@@ -654,11 +628,16 @@ struct CursorDetailView: View {
                                 TextField("Y", value: $hotspotY, format: .number.precision(.fractionLength(1)))
                                     .textFieldStyle(.roundedBorder)
                                     .frame(width: 60)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 5)
+                                            .stroke(isHotspotYValid ? Color.clear : Color.red, lineWidth: 2)
+                                    )
                                     .onChange(of: hotspotY) { oldValue, newValue in
                                         guard !isLoadingValues else { return }
                                         guard newValue != oldValue else { return }
                                         let capturedOld = oldValue
-                                        cursor.hotSpot = NSPoint(x: cursor.hotSpot.x, y: CGFloat(newValue))
+                                        let actualNew = max(0, newValue)
+                                        cursor.hotSpot = NSPoint(x: cursor.hotSpot.x, y: CGFloat(actualNew))
                                         previewRefreshTrigger += 1
                                         appState.registerUndo(
                                             undo: { [weak cursor] in
@@ -667,8 +646,8 @@ struct CursorDetailView: View {
                                                 self.previewRefreshTrigger += 1
                                             },
                                             redo: { [weak cursor] in
-                                                cursor?.hotSpot = NSPoint(x: cursor?.hotSpot.x ?? 0, y: CGFloat(newValue))
-                                                self.hotspotY = newValue
+                                                cursor?.hotSpot = NSPoint(x: cursor?.hotSpot.x ?? 0, y: CGFloat(actualNew))
+                                                self.hotspotY = actualNew
                                                 self.previewRefreshTrigger += 1
                                             }
                                         )
@@ -690,6 +669,10 @@ struct CursorDetailView: View {
                             TextField("Frames", value: $frameCount, format: .number)
                                 .textFieldStyle(.roundedBorder)
                                 .frame(width: 60)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 5)
+                                        .stroke(isFrameCountValid ? Color.clear : Color.red, lineWidth: 2)
+                                )
                                 .onChange(of: frameCount) { oldValue, newValue in
                                     guard !isLoadingValues else { return }
                                     guard newValue != oldValue else { return }
@@ -713,10 +696,14 @@ struct CursorDetailView: View {
                         }
 
                         HStack {
-                            Text("FPS:")
-                            TextField("FPS", value: $fps, format: .number.precision(.fractionLength(1)))
+                            Text("Speed:")
+                            TextField("Speed", value: $fps, format: .number.precision(.fractionLength(1)))
                                 .textFieldStyle(.roundedBorder)
                                 .frame(width: 60)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 5)
+                                        .stroke(isFPSValid ? Color.clear : Color.red, lineWidth: 2)
+                                )
                                 .onChange(of: fps) { oldValue, newValue in
                                     guard !isLoadingValues else { return }
                                     guard newValue != oldValue else { return }
@@ -770,8 +757,6 @@ struct CursorDetailView: View {
 
     private func loadCursorValues() {
         isLoadingValues = true
-        sizeWidth = Double(cursor.size.width)
-        sizeHeight = Double(cursor.size.height)
         hotspotX = Double(cursor.hotSpot.x)
         hotspotY = Double(cursor.hotSpot.y)
         frameCount = cursor.frameCount
@@ -805,10 +790,9 @@ struct CursorPreviewDropZone: View {
 
     private let targetScale: CursorScale = .scale200  // Always use 2x HiDPI
 
-    /// Check if cursor has any valid image (with non-zero size)
+    /// Check if cursor has any valid image representation
     private var hasImage: Bool {
-        guard let image = cursor.image else { return false }
-        return image.size.width > 0 && image.size.height > 0
+        cursor.hasAnyRepresentation
     }
 
     var body: some View {
@@ -819,7 +803,7 @@ struct CursorPreviewDropZone: View {
                     cursor: cursor,
                     showHotspot: true,
                     refreshTrigger: refreshTrigger + localRefreshTrigger,
-                    scale: 1
+                    scale: 2
                 )
             } else {
                 // Empty state - prompt to add image
@@ -886,6 +870,9 @@ struct CursorPreviewDropZone: View {
         }
     }
 
+    /// Standard cursor size for 2x HiDPI (64x64 pixels = 32x32 points)
+    private let standardCursorSize: Int = 64
+
     private func loadImage(from url: URL) -> Bool {
         guard url.startAccessingSecurityScopedResource() else {
             print("Failed to access security scoped resource: \(url)")
@@ -898,25 +885,46 @@ struct CursorPreviewDropZone: View {
             return false
         }
 
-        // Convert to bitmap representation
-        guard let bitmapRep = createBitmapRep(from: image) else {
-            print("Failed to create bitmap rep from image")
+        // Get original image dimensions
+        guard let originalBitmap = getOriginalBitmapRep(from: image) else {
+            print("Failed to get bitmap rep from image")
             return false
         }
 
-        cursor.setRepresentation(bitmapRep, for: targetScale)
+        let originalWidth = originalBitmap.pixelsWide
+        let originalHeight = originalBitmap.pixelsHigh
+
+        // Check if image is square
+        let isSquare = originalWidth == originalHeight
+        if !isSquare {
+            // Show warning but continue with import
+            appState.imageImportWarningMessage = "Image is not square (\(originalWidth)×\(originalHeight)). It will be scaled to fit and centered."
+            appState.showImageImportWarning = true
+        }
+
+        // Scale image to standard size (64x64) with aspect fit and center
+        guard let scaledBitmap = scaleImageToStandardSize(originalBitmap) else {
+            print("Failed to scale image")
+            return false
+        }
+
+        cursor.setRepresentation(scaledBitmap, for: targetScale)
+
+        // Set cursor size to 32x32 points (since we use 2x scale)
+        cursor.size = NSSize(width: 32, height: 32)
+
         appState.markAsChanged()
 
         // Trigger refresh - both local preview and cursor list
         localRefreshTrigger += 1
         appState.cursorListRefreshTrigger += 1
 
-        print("Image imported successfully: \(bitmapRep.pixelsWide)x\(bitmapRep.pixelsHigh)")
+        print("Image imported successfully: \(originalWidth)x\(originalHeight) → \(standardCursorSize)x\(standardCursorSize)")
         return true
     }
 
-    /// Convert NSImage to NSBitmapImageRep
-    private func createBitmapRep(from image: NSImage) -> NSBitmapImageRep? {
+    /// Get original bitmap representation from image
+    private func getOriginalBitmapRep(from image: NSImage) -> NSBitmapImageRep? {
         // First try to get existing bitmap rep
         for rep in image.representations {
             if let bitmapRep = rep as? NSBitmapImageRep {
@@ -929,8 +937,64 @@ struct CursorPreviewDropZone: View {
             return nil
         }
 
-        let bitmapRep = NSBitmapImageRep(cgImage: cgImage)
-        return bitmapRep
+        return NSBitmapImageRep(cgImage: cgImage)
+    }
+
+    /// Scale image to standard 64x64 size with aspect fit and transparent padding
+    private func scaleImageToStandardSize(_ original: NSBitmapImageRep) -> NSBitmapImageRep? {
+        let targetSize = standardCursorSize
+
+        // Create new bitmap with transparent background
+        guard let newBitmap = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: targetSize,
+            pixelsHigh: targetSize,
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: targetSize * 4,
+            bitsPerPixel: 32
+        ) else {
+            return nil
+        }
+
+        // Calculate aspect-fit scaling
+        let originalWidth = CGFloat(original.pixelsWide)
+        let originalHeight = CGFloat(original.pixelsHigh)
+        let targetSizeF = CGFloat(targetSize)
+
+        let scale = min(targetSizeF / originalWidth, targetSizeF / originalHeight)
+        let scaledWidth = originalWidth * scale
+        let scaledHeight = originalHeight * scale
+
+        // Center the image
+        let offsetX = (targetSizeF - scaledWidth) / 2
+        let offsetY = (targetSizeF - scaledHeight) / 2
+
+        // Draw into new bitmap
+        NSGraphicsContext.saveGraphicsState()
+        guard let context = NSGraphicsContext(bitmapImageRep: newBitmap) else {
+            NSGraphicsContext.restoreGraphicsState()
+            return nil
+        }
+        NSGraphicsContext.current = context
+
+        // Clear to transparent
+        NSColor.clear.setFill()
+        NSRect(x: 0, y: 0, width: targetSize, height: targetSize).fill()
+
+        // Draw scaled image centered
+        let sourceImage = NSImage(size: NSSize(width: originalWidth, height: originalHeight))
+        sourceImage.addRepresentation(original)
+
+        let destRect = NSRect(x: offsetX, y: offsetY, width: scaledWidth, height: scaledHeight)
+        sourceImage.draw(in: destRect, from: .zero, operation: .copy, fraction: 1.0)
+
+        NSGraphicsContext.restoreGraphicsState()
+
+        return newBitmap
     }
 }
 

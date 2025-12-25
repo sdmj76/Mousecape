@@ -20,11 +20,7 @@
 // Controllers
 #import "MCLibraryController.h"
 
-// Views
-#import "MMAnimatingImageView.h"
-#import "MCSpriteLayer.h"
-
-// Categories
-#import "NSFileManager+DirectoryLocations.h"
+// Scale utilities (private CoreGraphics API)
+#import "scale.h"
 
 #endif /* Mousecape_Bridging_Header_h */

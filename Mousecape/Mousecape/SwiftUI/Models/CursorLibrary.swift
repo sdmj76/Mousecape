@@ -11,11 +11,21 @@ import AppKit
 /// Swift wrapper around MCCursorLibrary for SwiftUI usage
 @Observable
 final class CursorLibrary: Identifiable, Hashable {
-    let id: UUID
+    /// Stable ID based on the underlying ObjC object's memory address
+    /// This ensures the same ObjC library always has the same wrapper ID
+    var id: ObjectIdentifier {
+        ObjectIdentifier(objcLibrary)
+    }
+
     private let objcLibrary: MCCursorLibrary
 
     // Cached cursors for SwiftUI
     private var _cursors: [Cursor]?
+
+    /// Invalidate cursor cache (call after modifications)
+    func invalidateCursorCache() {
+        _cursors = nil
+    }
 
     // MARK: - Properties (bridged from ObjC)
 
@@ -123,7 +133,6 @@ final class CursorLibrary: Identifiable, Hashable {
     // MARK: - Initialization
 
     init(objcLibrary: MCCursorLibrary) {
-        self.id = UUID()
         self.objcLibrary = objcLibrary
     }
 
@@ -132,9 +141,21 @@ final class CursorLibrary: Identifiable, Hashable {
         let library = MCCursorLibrary(cursors: Set())!
         library.name = name
         library.author = author
-        library.identifier = UUID().uuidString
+        // Generate identifier in format: local.Author.Name
+        let sanitizedAuthor = Self.sanitizeIdentifierComponent(author.isEmpty ? "Unknown" : author)
+        let sanitizedName = Self.sanitizeIdentifierComponent(name.isEmpty ? "Untitled" : name)
+        library.identifier = "local.\(sanitizedAuthor).\(sanitizedName)"
         library.version = NSNumber(value: 1.0)
         self.init(objcLibrary: library)
+    }
+
+    /// Sanitize a string for use in identifier (remove spaces and special characters)
+    static func sanitizeIdentifierComponent(_ string: String) -> String {
+        // Replace spaces with nothing, keep only alphanumeric and some punctuation
+        let allowed = CharacterSet.alphanumerics
+        let components = string.unicodeScalars.filter { allowed.contains($0) }
+        let result = String(String.UnicodeScalarView(components))
+        return result.isEmpty ? "Unknown" : result
     }
 
     /// Load from URL

@@ -99,6 +99,16 @@ final class Cursor: Identifiable, Hashable {
         representation(for: scale) != nil
     }
 
+    /// Check if cursor has any actual image data
+    var hasAnyRepresentation: Bool {
+        for scale in CursorScale.allCases {
+            if hasRepresentation(for: scale) {
+                return true
+            }
+        }
+        return false
+    }
+
     // MARK: - Cursor Type
 
     var cursorType: CursorType? {
@@ -117,7 +127,8 @@ final class Cursor: Identifiable, Hashable {
         let cursor = MCCursor()
         cursor.identifier = identifier
         cursor.frameCount = 1
-        cursor.frameDuration = 0
+        cursor.frameDuration = 1.0  // Default 1 fps
+        cursor.size = NSSize(width: 32, height: 32)  // Default size
         cursor.hotSpot = NSPoint(x: 0, y: 0)
         self.init(objcCursor: cursor)
     }

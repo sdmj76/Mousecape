@@ -63,8 +63,13 @@ struct GeneralSettingsView: View {
     @AppStorage("launchAtLogin") private var launchAtLogin = false
     @AppStorage("applyLastCapeOnLaunch") private var applyLastCapeOnLaunch = true
     @AppStorage("doubleClickAction") private var doubleClickAction = 0
-    @AppStorage("cursorScale") private var cursorScale = 1.0
+    @State private var cursorScale: Double = 1.0
     @Environment(LocalizationManager.self) private var localization
+    @Environment(AppState.self) private var appState
+
+    /// The key used by ObjC code for cursor scale
+    private static let cursorScaleKey = "MCCursorScale"
+    private static let preferenceDomain = "com.alexzielenski.Mousecape"
 
     var body: some View {
         Form {
@@ -91,11 +96,42 @@ struct GeneralSettingsView: View {
                     } maximumValueLabel: {
                         Text("2.0x")
                     }
+                    .onChange(of: cursorScale) { _, newValue in
+                        saveCursorScale(newValue)
+                        // Apply the cursor scale immediately using the ObjC function
+                        _ = setCursorScale(Float(newValue))
+                    }
+
+                    Text(localization.localized("Scale changes are applied immediately."))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
         .formStyle(.grouped)
         .navigationTitle(localization.localized("General"))
+        .onAppear {
+            loadCursorScale()
+        }
+    }
+
+    /// Load cursor scale from CFPreferences (same as ObjC code)
+    private func loadCursorScale() {
+        if let value = CFPreferencesCopyAppValue(Self.cursorScaleKey as CFString, Self.preferenceDomain as CFString) as? Double {
+            cursorScale = value
+        } else {
+            cursorScale = 1.0
+        }
+    }
+
+    /// Save cursor scale to CFPreferences (same as ObjC code)
+    private func saveCursorScale(_ value: Double) {
+        CFPreferencesSetAppValue(
+            Self.cursorScaleKey as CFString,
+            value as CFNumber,
+            Self.preferenceDomain as CFString
+        )
+        CFPreferencesAppSynchronize(Self.preferenceDomain as CFString)
     }
 }
 
