@@ -79,6 +79,12 @@ final class AppState: @unchecked Sendable {
 
     /// Loading state
     var isLoading: Bool = false
+    var loadingMessage: String = ""
+
+    /// Import result state (for Windows cursor import)
+    var showImportResult: Bool = false
+    var importResultMessage: String = ""
+    var importResultIsSuccess: Bool = true
 
     /// Error state
     var lastError: Error?
@@ -639,6 +645,317 @@ final class AppState: @unchecked Sendable {
 
         return true
     }
+
+    // MARK: - Windows Cursor Import
+
+    #if ENABLE_WINDOWS_IMPORT
+    /// Standard cursor size for 2x HiDPI (64x64 pixels = 32x32 points)
+    private let standardCursorSize: Int = 64
+
+    /// Import Windows cursors from a folder and create a new cape
+    func importWindowsCursorFolder() {
+        let panel = NSOpenPanel()
+        panel.title = "Select Windows Cursor Folder"
+        panel.message = "Choose a folder containing .cur and .ani files"
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+
+        panel.begin { [weak self] response in
+            guard response == .OK, let url = panel.url else { return }
+            Task { @MainActor in
+                await self?.processWindowsCursorFolderAsync(url)
+            }
+        }
+    }
+
+    /// Process a folder of Windows cursors (async version with loading state)
+    private func processWindowsCursorFolderAsync(_ folderURL: URL) async {
+        // Show loading overlay
+        isLoading = true
+        loadingMessage = "Importing Windows cursors..."
+
+        do {
+            // Convert all cursors in the folder asynchronously (doesn't block main thread)
+            let results = try await WindowsCursorConverter.shared.convertFolderAsync(folderURL: folderURL)
+
+            if results.isEmpty {
+                isLoading = false
+                importResultMessage = "No valid cursor files found in the selected folder."
+                importResultIsSuccess = false
+                showImportResult = true
+                return
+            }
+
+            // Create new cape with folder name
+            let capeName = sanitizeCapeNameFromFolder(folderURL)
+            let newCape = CursorLibrary(name: capeName, author: "Imported")
+
+            // Process each cursor result
+            var importedCount = 0
+            for result in results {
+                // Get macOS cursor types for this Windows cursor
+                let cursorTypes = WindowsCursorMapping.cursorTypes(for: result.filename)
+
+                if cursorTypes.isEmpty {
+                    print("Skipping unknown cursor: \(result.filename)")
+                    continue
+                }
+
+                // Create bitmap from result
+                guard let originalBitmap = result.createBitmapImageRep() else {
+                    print("Failed to create bitmap for: \(result.filename)")
+                    continue
+                }
+
+                // Scale the bitmap to standard size (64x64 per frame)
+                let scaledBitmap: NSBitmapImageRep?
+                if result.frameCount > 1 {
+                    scaledBitmap = scaleWindowsSpriteSheet(originalBitmap, result: result)
+                } else {
+                    scaledBitmap = scaleImageToStandardSize(originalBitmap)
+                }
+
+                guard let finalBitmap = scaledBitmap else {
+                    print("Failed to scale bitmap for: \(result.filename)")
+                    continue
+                }
+
+                // Calculate scaled hotspot
+                // The bitmap is scaled to 64x64 pixels (standardCursorSize)
+                // But cursor.size is in points (32x32 for 2x scale)
+                // So hotspot should also be in points (divide by 2)
+                let originalWidth = CGFloat(result.width)
+                let originalHeight = CGFloat(result.height)
+                let targetSizeF = CGFloat(standardCursorSize)  // 64 pixels
+                let scale = min(targetSizeF / originalWidth, targetSizeF / originalHeight)
+                let scaledWidth = originalWidth * scale
+                let scaledHeight = originalHeight * scale
+                let offsetX = (targetSizeF - scaledWidth) / 2
+                let offsetY = (targetSizeF - scaledHeight) / 2
+
+                // Calculate hotspot in pixels, then convert to points
+                let hotspotPixelsX = CGFloat(result.hotspotX) * scale + offsetX
+                let hotspotPixelsY = CGFloat(result.hotspotY) * scale + offsetY
+
+                // Convert to points (divide by 2 for 2x scale)
+                // Also clamp to valid range [0, 32)
+                let pointsSize: CGFloat = 32.0
+                let hotspotPointsX = min(max(hotspotPixelsX / 2.0, 0), pointsSize - 0.1)
+                let hotspotPointsY = min(max(hotspotPixelsY / 2.0, 0), pointsSize - 0.1)
+
+                // Create a cursor for each mapped type
+                for cursorType in cursorTypes {
+                    let cursor = Cursor(identifier: cursorType.rawValue)
+
+                    // Set properties
+                    cursor.frameCount = result.frameCount
+                    cursor.frameDuration = result.frameDuration
+                    cursor.hotSpot = NSPoint(x: hotspotPointsX, y: hotspotPointsY)
+                    cursor.size = NSSize(width: 32, height: 32)  // 32x32 points for 2x scale
+
+                    // Set representation (copy bitmap for each cursor type)
+                    if let bitmapCopy = finalBitmap.copy() as? NSBitmapImageRep {
+                        cursor.setRepresentation(bitmapCopy, for: .scale200)
+                    } else {
+                        cursor.setRepresentation(finalBitmap, for: .scale200)
+                    }
+
+                    newCape.addCursor(cursor)
+                    importedCount += 1
+                }
+            }
+
+            if importedCount == 0 {
+                isLoading = false
+                importResultMessage = "No cursors could be mapped to macOS cursor types."
+                importResultIsSuccess = false
+                showImportResult = true
+                return
+            }
+
+            // Save the new cape
+            if let libraryURL = libraryController?.libraryURL {
+                let identifier = generateIdentifier(name: capeName, author: "Imported")
+                newCape.identifier = identifier
+                newCape.fileURL = libraryURL.appendingPathComponent("\(identifier).cape")
+
+                try newCape.save()
+
+                // Add to library controller so it shows up in the list
+                addCape(newCape)
+
+                // Select the new cape
+                selectedCape = capes.first { $0.identifier == identifier }
+
+                print("Imported \(importedCount) cursor(s) from \(results.count) file(s)")
+
+                // Show success message
+                isLoading = false
+                importResultMessage = "Successfully imported \(importedCount) cursor(s) from \(results.count) file(s)."
+                importResultIsSuccess = true
+                showImportResult = true
+            } else {
+                isLoading = false
+                importResultMessage = "Failed to access library directory."
+                importResultIsSuccess = false
+                showImportResult = true
+            }
+
+        } catch {
+            isLoading = false
+            importResultMessage = "Failed to import Windows cursors: \(error.localizedDescription)"
+            importResultIsSuccess = false
+            showImportResult = true
+        }
+    }
+
+    /// Scale image to standard 64x64 size with aspect fit and transparent padding
+    private func scaleImageToStandardSize(_ original: NSBitmapImageRep) -> NSBitmapImageRep? {
+        let targetSize = standardCursorSize
+
+        // Create new bitmap with transparent background
+        guard let newBitmap = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: targetSize,
+            pixelsHigh: targetSize,
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: targetSize * 4,
+            bitsPerPixel: 32
+        ) else {
+            return nil
+        }
+
+        // Calculate aspect-fit scaling
+        let originalWidth = CGFloat(original.pixelsWide)
+        let originalHeight = CGFloat(original.pixelsHigh)
+        let targetSizeF = CGFloat(targetSize)
+
+        let scale = min(targetSizeF / originalWidth, targetSizeF / originalHeight)
+        let scaledWidth = originalWidth * scale
+        let scaledHeight = originalHeight * scale
+
+        // Center the image
+        let offsetX = (targetSizeF - scaledWidth) / 2
+        let offsetY = (targetSizeF - scaledHeight) / 2
+
+        // Draw into new bitmap
+        NSGraphicsContext.saveGraphicsState()
+        guard let context = NSGraphicsContext(bitmapImageRep: newBitmap) else {
+            NSGraphicsContext.restoreGraphicsState()
+            return nil
+        }
+        NSGraphicsContext.current = context
+
+        // Clear to transparent
+        NSColor.clear.setFill()
+        NSRect(x: 0, y: 0, width: targetSize, height: targetSize).fill()
+
+        // Draw scaled image centered
+        let sourceImage = NSImage(size: NSSize(width: originalWidth, height: originalHeight))
+        sourceImage.addRepresentation(original)
+
+        let destRect = NSRect(x: offsetX, y: offsetY, width: scaledWidth, height: scaledHeight)
+        sourceImage.draw(in: destRect, from: .zero, operation: .copy, fraction: 1.0)
+
+        NSGraphicsContext.restoreGraphicsState()
+
+        return newBitmap
+    }
+
+    /// Scale a Windows cursor sprite sheet (animated cursor with multiple frames stacked vertically)
+    private func scaleWindowsSpriteSheet(_ original: NSBitmapImageRep, result: WindowsCursorResult) -> NSBitmapImageRep? {
+        let targetSize = standardCursorSize
+        let frameCount = result.frameCount
+        let originalFrameWidth = result.width
+        let originalFrameHeight = result.height
+
+        // Create new bitmap for the scaled sprite sheet
+        guard let newBitmap = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: targetSize,
+            pixelsHigh: targetSize * frameCount,
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: targetSize * 4,
+            bitsPerPixel: 32
+        ) else {
+            return nil
+        }
+
+        // Calculate aspect-fit scaling
+        let originalWidth = CGFloat(originalFrameWidth)
+        let originalHeight = CGFloat(originalFrameHeight)
+        let targetSizeF = CGFloat(targetSize)
+
+        let scale = min(targetSizeF / originalWidth, targetSizeF / originalHeight)
+        let scaledWidth = originalWidth * scale
+        let scaledHeight = originalHeight * scale
+
+        // Center offset
+        let offsetX = (targetSizeF - scaledWidth) / 2
+        let offsetY = (targetSizeF - scaledHeight) / 2
+
+        // Draw into new bitmap
+        NSGraphicsContext.saveGraphicsState()
+        guard let context = NSGraphicsContext(bitmapImageRep: newBitmap) else {
+            NSGraphicsContext.restoreGraphicsState()
+            return nil
+        }
+        NSGraphicsContext.current = context
+
+        // Clear to transparent
+        NSColor.clear.setFill()
+        NSRect(x: 0, y: 0, width: targetSize, height: targetSize * frameCount).fill()
+
+        // Create source image from original bitmap
+        let sourceImage = NSImage(size: NSSize(width: original.pixelsWide, height: original.pixelsHigh))
+        sourceImage.addRepresentation(original)
+
+        // Draw each frame
+        for frameIndex in 0..<frameCount {
+            // Source rect for this frame in the original sprite sheet
+            let srcY = CGFloat(frameIndex) * originalHeight
+            let srcRect = NSRect(x: 0, y: srcY, width: originalWidth, height: originalHeight)
+
+            // Destination rect for this frame in the scaled sprite sheet
+            let dstY = CGFloat(frameIndex) * targetSizeF + offsetY
+            let dstRect = NSRect(x: offsetX, y: dstY, width: scaledWidth, height: scaledHeight)
+
+            sourceImage.draw(in: dstRect, from: srcRect, operation: .copy, fraction: 1.0)
+        }
+
+        NSGraphicsContext.restoreGraphicsState()
+
+        return newBitmap
+    }
+
+    /// Sanitize folder name for use as cape name
+    private func sanitizeCapeNameFromFolder(_ folderURL: URL) -> String {
+        let folderName = folderURL.lastPathComponent
+        let trimmed = folderName.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Check if name is valid
+        if trimmed.isEmpty || trimmed.hasPrefix(".") {
+            return "Imported Cursors"
+        }
+
+        // Filter to allowed characters
+        let filtered = AppState.filterNameOrAuthor(trimmed)
+        if filtered.isEmpty {
+            return "Imported Cursors"
+        }
+
+        return filtered
+    }
+    #endif
 }
 
 // MARK: - AppState Singleton

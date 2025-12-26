@@ -9,6 +9,22 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+// MARK: - Windows Cursor UTType Extensions
+
+#if ENABLE_WINDOWS_IMPORT
+extension UTType {
+    /// Windows static cursor file (.cur)
+    static var windowsCursor: UTType {
+        UTType(filenameExtension: "cur") ?? .data
+    }
+
+    /// Windows animated cursor file (.ani)
+    static var windowsAnimatedCursor: UTType {
+        UTType(filenameExtension: "ani") ?? .data
+    }
+}
+#endif
+
 // MARK: - Edit Detail Content (right panel content only, used in HomeView)
 
 struct EditDetailContent: View {
@@ -822,6 +838,15 @@ struct CursorPreviewDropZone: View {
 
     private let targetScale: CursorScale = .scale200  // Always use 2x HiDPI
 
+    /// Supported image types for file picker
+    private var supportedImageTypes: [UTType] {
+        var types: [UTType] = [.png, .jpeg, .tiff, .gif]
+        #if ENABLE_WINDOWS_IMPORT
+        types.append(contentsOf: [.windowsCursor, .windowsAnimatedCursor])
+        #endif
+        return types
+    }
+
     /// Check if cursor has any valid image representation
     private var hasImage: Bool {
         cursor.hasAnyRepresentation
@@ -878,7 +903,7 @@ struct CursorPreviewDropZone: View {
         }
         .fileImporter(
             isPresented: $showFilePicker,
-            allowedContentTypes: [.png, .jpeg, .tiff, .gif],
+            allowedContentTypes: supportedImageTypes,
             allowsMultipleSelection: false
         ) { result in
             handleFileImport(result)
@@ -911,6 +936,14 @@ struct CursorPreviewDropZone: View {
             return false
         }
         defer { url.stopAccessingSecurityScopedResource() }
+
+        // Check if it's a Windows cursor file
+        let ext = url.pathExtension.lowercased()
+        #if ENABLE_WINDOWS_IMPORT
+        if ext == "cur" || ext == "ani" {
+            return loadWindowsCursor(from: url)
+        }
+        #endif
 
         guard let image = NSImage(contentsOf: url) else {
             print("Failed to load image from: \(url)")
@@ -1028,6 +1061,161 @@ struct CursorPreviewDropZone: View {
 
         return newBitmap
     }
+
+    // MARK: - Windows Cursor Import
+
+    #if ENABLE_WINDOWS_IMPORT
+    /// Load a Windows cursor file (.cur or .ani)
+    private func loadWindowsCursor(from url: URL) -> Bool {
+        do {
+            let result = try WindowsCursorConverter.shared.convert(fileURL: url)
+
+            // Create bitmap from result
+            guard let originalBitmap = result.createBitmapImageRep() else {
+                print("Failed to create bitmap from Windows cursor")
+                return false
+            }
+
+            // For animated cursors, set frame count and duration
+            if result.frameCount > 1 {
+                cursor.frameCount = result.frameCount
+                cursor.frameDuration = result.frameDuration
+            } else {
+                cursor.frameCount = 1
+                cursor.frameDuration = 0.0
+            }
+
+            // Calculate scale factor for hotspot adjustment
+            let originalWidth = CGFloat(result.width)
+            let originalHeight = CGFloat(result.height)
+            let targetSizeF = CGFloat(standardCursorSize)
+
+            // For animated cursors, the sprite sheet height is frameCount * height
+            // We need to scale the entire sprite sheet
+            let frameCount = result.frameCount
+            let singleFrameHeight = originalHeight
+
+            // Scale factor (same as PNG import logic)
+            let scale = min(targetSizeF / originalWidth, targetSizeF / singleFrameHeight)
+            let scaledWidth = originalWidth * scale
+            let scaledHeight = singleFrameHeight * scale
+
+            // Offset for centering
+            let offsetX = (targetSizeF - scaledWidth) / 2
+            let offsetY = (targetSizeF - scaledHeight) / 2
+
+            // Scale hotspot proportionally and add offset
+            let scaledHotspotX = CGFloat(result.hotspotX) * scale + offsetX
+            let scaledHotspotY = CGFloat(result.hotspotY) * scale + offsetY
+
+            // Set hotspot (scaled and centered)
+            cursor.hotSpot = NSPoint(x: scaledHotspotX, y: scaledHotspotY)
+
+            // Set size to 32x32 points (since we use 2x scale, same as PNG import)
+            cursor.size = NSSize(width: 32, height: 32)
+
+            // Scale the bitmap to standard size (64x64 per frame)
+            if frameCount > 1 {
+                // Animated cursor: scale each frame and stack vertically
+                guard let scaledBitmap = scaleWindowsSpriteSheet(originalBitmap, frameCount: frameCount, originalFrameWidth: Int(originalWidth), originalFrameHeight: Int(singleFrameHeight)) else {
+                    print("Failed to scale animated cursor sprite sheet")
+                    return false
+                }
+                cursor.setRepresentation(scaledBitmap, for: targetScale)
+            } else {
+                // Static cursor: scale to 64x64
+                guard let scaledBitmap = scaleImageToStandardSize(originalBitmap) else {
+                    print("Failed to scale Windows cursor")
+                    return false
+                }
+                cursor.setRepresentation(scaledBitmap, for: targetScale)
+            }
+
+            appState.markAsChanged()
+
+            // Trigger refresh
+            localRefreshTrigger += 1
+            appState.cursorListRefreshTrigger += 1
+
+            let frameInfo = result.frameCount > 1 ? " (\(result.frameCount) frames)" : ""
+            print("Windows cursor imported: \(result.width)x\(result.height)\(frameInfo) → \(standardCursorSize)x\(standardCursorSize)")
+            return true
+
+        } catch {
+            print("Failed to convert Windows cursor: \(error.localizedDescription)")
+            appState.imageImportWarningMessage = "Failed to import Windows cursor: \(error.localizedDescription)"
+            appState.showImageImportWarning = true
+            return false
+        }
+    }
+
+    /// Scale a Windows cursor sprite sheet (animated cursor with multiple frames stacked vertically)
+    private func scaleWindowsSpriteSheet(_ original: NSBitmapImageRep, frameCount: Int, originalFrameWidth: Int, originalFrameHeight: Int) -> NSBitmapImageRep? {
+        let targetSize = standardCursorSize
+
+        // Create new bitmap for the scaled sprite sheet
+        guard let newBitmap = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: targetSize,
+            pixelsHigh: targetSize * frameCount,
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: targetSize * 4,
+            bitsPerPixel: 32
+        ) else {
+            return nil
+        }
+
+        // Calculate aspect-fit scaling
+        let originalWidth = CGFloat(originalFrameWidth)
+        let originalHeight = CGFloat(originalFrameHeight)
+        let targetSizeF = CGFloat(targetSize)
+
+        let scale = min(targetSizeF / originalWidth, targetSizeF / originalHeight)
+        let scaledWidth = originalWidth * scale
+        let scaledHeight = originalHeight * scale
+
+        // Center offset
+        let offsetX = (targetSizeF - scaledWidth) / 2
+        let offsetY = (targetSizeF - scaledHeight) / 2
+
+        // Draw into new bitmap
+        NSGraphicsContext.saveGraphicsState()
+        guard let context = NSGraphicsContext(bitmapImageRep: newBitmap) else {
+            NSGraphicsContext.restoreGraphicsState()
+            return nil
+        }
+        NSGraphicsContext.current = context
+
+        // Clear to transparent
+        NSColor.clear.setFill()
+        NSRect(x: 0, y: 0, width: targetSize, height: targetSize * frameCount).fill()
+
+        // Create source image from original bitmap
+        let sourceImage = NSImage(size: NSSize(width: original.pixelsWide, height: original.pixelsHigh))
+        sourceImage.addRepresentation(original)
+
+        // Draw each frame
+        for frameIndex in 0..<frameCount {
+            // Source rect for this frame in the original sprite sheet
+            let srcY = CGFloat(frameIndex) * originalHeight
+            let srcRect = NSRect(x: 0, y: srcY, width: originalWidth, height: originalHeight)
+
+            // Destination rect for this frame in the scaled sprite sheet
+            let dstY = CGFloat(frameIndex) * targetSizeF + offsetY
+            let dstRect = NSRect(x: offsetX, y: dstY, width: scaledWidth, height: scaledHeight)
+
+            sourceImage.draw(in: dstRect, from: srcRect, operation: .copy, fraction: 1.0)
+        }
+
+        NSGraphicsContext.restoreGraphicsState()
+
+        return newBitmap
+    }
+    #endif
 }
 
 // MARK: - Helper Tool Settings Section

@@ -23,6 +23,12 @@
 		DE3662092EFAAAB600D94521 /* Cursor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE3661ED2EFAAAB600D94521 /* Cursor.swift */; };
 		DE36620A2EFAAAB600D94521 /* AppEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE3661EB2EFAAAB600D94521 /* AppEnums.swift */; };
 		DE36620B2EFAAAB600D94521 /* LocalizationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE36620C2EFAAAB600D94521 /* LocalizationManager.swift */; };
+		DE525A822EFE93C200A315A3 /* WindowsCursorConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE525A7F2EFE93C200A315A3 /* WindowsCursorConverter.swift */; };
+		DE525A832EFE93C200A315A3 /* OrderedSetSortedInsert.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE525A7E2EFE93C200A315A3 /* OrderedSetSortedInsert.swift */; };
+		DE525A842EFE93C200A315A3 /* WindowsCursorMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE525A802EFE93C200A315A3 /* WindowsCursorMapping.swift */; };
+		DE525A852EFE93C200A315A3 /* DirectoryLocations.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE525A7D2EFE93C200A315A3 /* DirectoryLocations.swift */; };
+		DE525A8A2EFE93D500A315A3 /* curconvert.py in Resources */ = {isa = PBXBuildFile; fileRef = DE525A872EFE93D500A315A3 /* curconvert.py */; };
+		DE525A8B2EFE93D500A315A3 /* bundle_python.sh in Resources */ = {isa = PBXBuildFile; fileRef = DE525A862EFE93D500A315A3 /* bundle_python.sh */; };
 		FA000001UTITYPES00000001 /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA000001UTITYPES00000000 /* UniformTypeIdentifiers.framework */; };
 		FA1DC01919527A73009E879C /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA359844189DBA3800288163 /* SystemConfiguration.framework */; };
 		FA1DC01A19527A79009E879C /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA254779189D85890038E1D9 /* ApplicationServices.framework */; };
@@ -134,6 +140,12 @@
 		DE3661F92EFAAAB600D94521 /* MousecapeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MousecapeApp.swift; sourceTree = "<group>"; };
 		DE3661FA2EFAAAB600D94521 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		DE36620C2EFAAAB600D94521 /* LocalizationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationManager.swift; sourceTree = "<group>"; };
+		DE525A7D2EFE93C200A315A3 /* DirectoryLocations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectoryLocations.swift; sourceTree = "<group>"; };
+		DE525A7E2EFE93C200A315A3 /* OrderedSetSortedInsert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderedSetSortedInsert.swift; sourceTree = "<group>"; };
+		DE525A7F2EFE93C200A315A3 /* WindowsCursorConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowsCursorConverter.swift; sourceTree = "<group>"; };
+		DE525A802EFE93C200A315A3 /* WindowsCursorMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowsCursorMapping.swift; sourceTree = "<group>"; };
+		DE525A862EFE93D500A315A3 /* bundle_python.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = bundle_python.sh; sourceTree = "<group>"; };
+		DE525A872EFE93D500A315A3 /* curconvert.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = curconvert.py; sourceTree = "<group>"; };
 		FA000001UTITYPES00000000 /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
 		FA1DC01719527A56009E879C /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		FA254779189D85890038E1D9 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
@@ -283,6 +295,7 @@
 		DE3661FB2EFAAAB600D94521 /* SwiftUI */ = {
 			isa = PBXGroup;
 			children = (
+				DE525A812EFE93C200A315A3 /* Utilities */,
 				DE3661EA2EFAAAB600D94521 /* Helpers */,
 				DE3661EF2EFAAAB600D94521 /* Models */,
 				DE3661F82EFAAAB600D94521 /* Views */,
@@ -290,6 +303,34 @@
 				DE3661FA2EFAAAB600D94521 /* README.md */,
 			);
 			path = SwiftUI;
+			sourceTree = "<group>";
+		};
+		DE525A812EFE93C200A315A3 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				DE525A7D2EFE93C200A315A3 /* DirectoryLocations.swift */,
+				DE525A7E2EFE93C200A315A3 /* OrderedSetSortedInsert.swift */,
+				DE525A7F2EFE93C200A315A3 /* WindowsCursorConverter.swift */,
+				DE525A802EFE93C200A315A3 /* WindowsCursorMapping.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		DE525A882EFE93D500A315A3 /* Scripts */ = {
+			isa = PBXGroup;
+			children = (
+				DE525A862EFE93D500A315A3 /* bundle_python.sh */,
+				DE525A872EFE93D500A315A3 /* curconvert.py */,
+			);
+			path = Scripts;
+			sourceTree = "<group>";
+		};
+		DE525A892EFE93D500A315A3 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				DE525A882EFE93D500A315A3 /* Scripts */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		FAC69F58189D603C00BC829D = {
@@ -344,6 +385,7 @@
 		FAC69F6A189D603C00BC829D /* Mousecape */ = {
 			isa = PBXGroup;
 			children = (
+				DE525A892EFE93D500A315A3 /* Resources */,
 				DE3661FB2EFAAAB600D94521 /* SwiftUI */,
 				FA5733A32495667900103FCF /* Mousecape.entitlements */,
 				FAEE650D18A047E8003AA182 /* controllers */,
@@ -496,6 +538,7 @@
 			buildPhases = (
 				FAC69F5D189D603C00BC829D /* Sources */,
 				FAC69F5F189D603C00BC829D /* Resources */,
+				DE525A5E2EFE8FBA00A315A3 /* Bundle Python Environment */,
 				FAC69F5E189D603C00BC829D /* Frameworks */,
 				FA359841189DAAF900288163 /* Build Number */,
 				FAE5D57D1952734F007620DE /* Copy Tool */,
@@ -594,6 +637,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				FAC69F6F189D603C00BC829D /* InfoPlist.strings in Resources */,
+				DE525A8A2EFE93D500A315A3 /* curconvert.py in Resources */,
+				DE525A8B2EFE93D500A315A3 /* bundle_python.sh in Resources */,
 				FAC69F7D189D603C00BC829D /* Images.xcassets in Resources */,
 				FAC69F75189D603C00BC829D /* Credits.rtf in Resources */,
 				DE3661FC2EFAAAB600D94521 /* README.md in Resources */,
@@ -610,6 +655,25 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		DE525A5E2EFE8FBA00A315A3 /* Bundle Python Environment */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Bundle Python Environment";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# 只在 Dev 配置下执行（Debug-Dev 或 Release-Dev）\nif [ \"$CONFIGURATION\" == \"Debug-Dev\" ] || [ \"$CONFIGURATION\" == \"Release-Dev\" ]; then\n    echo \"Bundling Python environment for Windows cursor import...\"\n    \"${SRCROOT}/Mousecape/Resources/Scripts/bundle_python.sh\"\nfi\n";
+		};
 		FA359841189DAAF900288163 /* Build Number */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -638,6 +702,10 @@
 				FAAEF94E189EFC9300145DF8 /* create.m in Sources */,
 				FAAEF94F189EFC9600145DF8 /* backup.m in Sources */,
 				FAAEF951189F0CC300145DF8 /* restore.m in Sources */,
+				DE525A822EFE93C200A315A3 /* WindowsCursorConverter.swift in Sources */,
+				DE525A832EFE93C200A315A3 /* OrderedSetSortedInsert.swift in Sources */,
+				DE525A842EFE93C200A315A3 /* WindowsCursorMapping.swift in Sources */,
+				DE525A852EFE93C200A315A3 /* DirectoryLocations.swift in Sources */,
 				FAAEF950189EFC9800145DF8 /* apply.m in Sources */,
 				FAEE653218A047E8003AA182 /* MCCursor.m in Sources */,
 				FAAEF958189F4F8200145DF8 /* scale.m in Sources */,
@@ -727,6 +795,307 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		DE525A562EFE8C8E00A315A3 /* Debug-Dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_EMPTY_CONTEXT = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"PROJECT_DIR=\\\"\"$(PROJECT_DIR)\"\\\"",
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = "Debug-Dev";
+		};
+		DE525A572EFE8C8E00A315A3 /* Debug-Dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon2;
+				CODE_SIGN_ENTITLEMENTS = Mousecape/Mousecape.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Mousecape/Mousecape-Prefix.pch";
+				INFOPLIST_FILE = "Mousecape/Mousecape-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(LD_RUNPATH_SEARCH_PATHS_$(IS_MACCATALYST))",
+					"@executable_path/../Frameworks",
+				);
+				OTHER_SWIFT_FLAGS = "-DENABLE_WINDOWS_IMPORT";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.alexzielenski.${PRODUCT_NAME:rfc1034identifier}";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_OBJC_BRIDGING_HEADER = "Mousecape/Mousecape-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+				WRAPPER_EXTENSION = app;
+			};
+			name = "Debug-Dev";
+		};
+		DE525A582EFE8C8E00A315A3 /* Debug-Dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "mousecloak/mousecloak-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"$(PROJECT_DIR)/mousecloak/vendor",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = "Debug-Dev";
+		};
+		DE525A592EFE8C8E00A315A3 /* Debug-Dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CODE_SIGN_ENTITLEMENTS = mousecloakHelper/mousecloakHelper.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "mousecloak/mousecloak-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"/Applications/Xcode6-Beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
+					"$(PROJECT_DIR)/mousecloak/vendor",
+				);
+				INFOPLIST_FILE = mousecloakHelper/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				METAL_ENABLE_DEBUG_INFO = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "${PRODUCT_NAME}";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = "Debug-Dev";
+		};
+		DE525A5A2EFE8CB900A315A3 /* Release-Dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_EMPTY_CONTEXT = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = "PROJECT_DIR=\\\"\"$(PROJECT_DIR)\"\\\"";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				SDKROOT = macosx;
+			};
+			name = "Release-Dev";
+		};
+		DE525A5B2EFE8CB900A315A3 /* Release-Dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon2;
+				CODE_SIGN_ENTITLEMENTS = Mousecape/Mousecape.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Mousecape/Mousecape-Prefix.pch";
+				INFOPLIST_FILE = "Mousecape/Mousecape-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(LD_RUNPATH_SEARCH_PATHS_$(IS_MACCATALYST))",
+					"@executable_path/../Frameworks",
+				);
+				OTHER_SWIFT_FLAGS = "-DENABLE_WINDOWS_IMPORT";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.alexzielenski.${PRODUCT_NAME:rfc1034identifier}";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_OBJC_BRIDGING_HEADER = "Mousecape/Mousecape-Bridging-Header.h";
+				SWIFT_VERSION = 6.0;
+				WRAPPER_EXTENSION = app;
+			};
+			name = "Release-Dev";
+		};
+		DE525A5C2EFE8CB900A315A3 /* Release-Dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "mousecloak/mousecloak-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"$(PROJECT_DIR)/mousecloak/vendor",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+			};
+			name = "Release-Dev";
+		};
+		DE525A5D2EFE8CB900A315A3 /* Release-Dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CODE_SIGN_ENTITLEMENTS = mousecloakHelper/mousecloakHelper.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "mousecloak/mousecloak-Prefix.pch";
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"/Applications/Xcode6-Beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
+					"$(PROJECT_DIR)/mousecloak/vendor",
+				);
+				INFOPLIST_FILE = mousecloakHelper/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				METAL_ENABLE_DEBUG_INFO = NO;
+				PRODUCT_BUNDLE_IDENTIFIER = "${PRODUCT_NAME}";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+			};
+			name = "Release-Dev";
+		};
 		FAC69F90189D603C00BC829D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1033,7 +1402,9 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FAC69F90189D603C00BC829D /* Debug */,
+				DE525A562EFE8C8E00A315A3 /* Debug-Dev */,
 				FAC69F91189D603C00BC829D /* Release */,
+				DE525A5A2EFE8CB900A315A3 /* Release-Dev */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -1042,7 +1413,9 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FAC69F93189D603C00BC829D /* Debug */,
+				DE525A572EFE8C8E00A315A3 /* Debug-Dev */,
 				FAC69F94189D603C00BC829D /* Release */,
+				DE525A5B2EFE8CB900A315A3 /* Release-Dev */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -1051,7 +1424,9 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FAC69FB7189D608A00BC829D /* Debug */,
+				DE525A582EFE8C8E00A315A3 /* Debug-Dev */,
 				FAC69FB8189D608A00BC829D /* Release */,
+				DE525A5C2EFE8CB900A315A3 /* Release-Dev */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -1060,7 +1435,9 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FAE5D56319526F82007620DE /* Debug */,
+				DE525A592EFE8C8E00A315A3 /* Debug-Dev */,
 				FAE5D56419526F82007620DE /* Release */,
+				DE525A5D2EFE8CB900A315A3 /* Release-Dev */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

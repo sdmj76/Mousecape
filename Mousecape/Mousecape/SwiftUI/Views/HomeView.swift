@@ -10,7 +10,7 @@ import SwiftUI
 // MARK: - Preview Scale Constants
 
 /// Scale factor for cursor previews in left sidebar grid
-private let sidebarPreviewScale: CGFloat = 1
+private let sidebarPreviewScale: CGFloat = 1.5
 
 struct HomeView: View {
     @Environment(AppState.self) private var appState
@@ -25,7 +25,17 @@ struct HomeView: View {
 
         // Group 1: New, Delete, Edit
         ToolbarItemGroup {
-            Button(action: { appState.createNewCape() }) {
+            Menu {
+                Button("New Cape") {
+                    appState.createNewCape()
+                }
+                #if ENABLE_WINDOWS_IMPORT
+                Divider()
+                Button("Import from Windows Cursors...") {
+                    appState.importWindowsCursorFolder()
+                }
+                #endif
+            } label: {
                 Image(systemName: "plus")
             }
             .help("New Cape")
