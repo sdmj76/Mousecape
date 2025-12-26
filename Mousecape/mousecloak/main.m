@@ -68,7 +68,7 @@ int main(int argc, char * argv[]) {
         options.applicationVersion = ^{ return @"2.0"; };
         options.applicationBuild = ^{ return @""; };
         options.printHelpHeader = ^{ return @(BOLD WHITE "%APPNAME v%APPVERSION" RESET); };
-        options.printHelpFooter = ^{ return @(BOLD WHITE "Copyright © 2013-20 Alex Zielenski" RESET); };
+        options.printHelpFooter = ^{ return @(BOLD WHITE "Copyright © 2013-2025 Sdmj76" RESET); };
         
         GBCommandLineParser *parser = [[[GBCommandLineParser alloc] init] autorelease];
         [options registerOptionsToCommandLineParser:parser];
