@@ -109,7 +109,8 @@ private let localizationStrings: [AppLanguage: [String: String]] = [
         "About": "About",
         "Version": "Version",
         "System Requirements": "System Requirements",
-        "Author": "Author",
+        "Original Author": "Original Author",
+        "SwiftUI Redesign": "SwiftUI Redesign",
         "Check for Updates": "Check for Updates",
         "Report Issue": "Report Issue",
 
@@ -273,7 +274,8 @@ private let localizationStrings: [AppLanguage: [String: String]] = [
         "About": "关于",
         "Version": "版本",
         "System Requirements": "系统要求",
-        "Author": "作者",
+        "Original Author": "原作者",
+        "SwiftUI Redesign": "SwiftUI 重构",
         "Check for Updates": "检查更新",
         "Report Issue": "报告问题",
 

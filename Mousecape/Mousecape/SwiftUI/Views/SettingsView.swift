@@ -227,14 +227,17 @@ struct AdvancedSettingsView: View {
                        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
                         Text("Mousecape v\(version) (\(build))")
                     } else {
-                        Text("Mousecape v2.0")
+                        Text("Mousecape v1.0.0")
                     }
                 }
                 LabeledContent(localization.localized("System Requirements")) {
                     Text("macOS 26+")
                 }
-                LabeledContent(localization.localized("Author")) {
+                LabeledContent(localization.localized("Original Author")) {
                     Text("\u{00A9} 2014-2025 Alex Zielenski")
+                }
+                LabeledContent(localization.localized("SwiftUI Redesign")) {
+                    Text("\u{00A9} 2025 sdmj76")
                 }
 
                 HStack {
@@ -242,12 +245,12 @@ struct AdvancedSettingsView: View {
                         checkForUpdates()
                     }
                     Button("GitHub") {
-                        if let url = URL(string: "https://github.com/alexzielenski/Mousecape") {
+                        if let url = URL(string: "https://github.com/sdmj76/Mousecape") {
                             NSWorkspace.shared.open(url)
                         }
                     }
                     Button(localization.localized("Report Issue")) {
-                        if let url = URL(string: "https://github.com/alexzielenski/Mousecape/issues") {
+                        if let url = URL(string: "https://github.com/sdmj76/Mousecape/issues") {
                             NSWorkspace.shared.open(url)
                         }
                     }
@@ -270,7 +273,7 @@ struct AdvancedSettingsView: View {
 
     private func checkForUpdates() {
         // Open GitHub releases page for manual update checking
-        if let url = URL(string: "https://github.com/alexzielenski/Mousecape/releases") {
+        if let url = URL(string: "https://github.com/sdmj76/Mousecape/releases") {
             NSWorkspace.shared.open(url)
         }
     }

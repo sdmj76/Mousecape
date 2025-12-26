@@ -32,7 +32,7 @@ xcodebuild -project Mousecape/Mousecape.xcodeproj -target mousecloak build
    - 命令：`--apply`、`--reset`、`--create`、`--dump`、`--scale`、`--convert`、`--export`
    - 使用 GBCli 进行参数解析
 
-3. **com.alexzielenski.mousecloakhelper**（LaunchAgent）- 后台守护进程
+3. **com.sdmj76.mousecloakhelper**（LaunchAgent）- 后台守护进程
    - 入口：`Mousecape/mousecloakHelper/main.m`
    - 监听用户会话变化以重新应用光标
 

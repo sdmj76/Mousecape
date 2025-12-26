@@ -1230,7 +1230,7 @@ struct CursorPreviewDropZone: View {
 import ServiceManagement
 
 struct HelperToolSettingsView: View {
-    private static let helperBundleIdentifier = "com.alexzielenski.mousecloakhelper"
+    private static let helperBundleIdentifier = "com.sdmj76.mousecloakhelper"
 
     @State private var isHelperInstalled = false
     @State private var showInstallAlert = false

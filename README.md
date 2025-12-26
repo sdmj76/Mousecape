@@ -32,7 +32,7 @@ launchctl list | grep mouse
 
 **Expected output (running normally):**
 ```
-12345   0   com.alexzielenski.mousecloakhelper
+12345   0   com.sdmj76.mousecloakhelper
 ```
 - First column: PID (process ID)
 - Second column: Exit code (`0` = running normally, `78` = configuration error)
@@ -41,7 +41,7 @@ launchctl list | grep mouse
 
 1. Unregister the old helper:
    ```bash
-   launchctl bootout gui/$(id -u)/com.alexzielenski.mousecloakhelper
+   launchctl bootout gui/$(id -u)/com.sdmj76.mousecloakhelper
    ```
 
 2. Wait a moment, then verify it's removed:
@@ -95,6 +95,9 @@ I worked very hard researching the private methods used in Mousecape and creatin
 Copyright (c) 2013-2025, Alex Zielenski
 All rights reserved.
 
+SwiftUI Interface Modifications Copyright (c) 2025, sdmj76
+All rights reserved.
+
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
 * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
@@ -137,7 +140,7 @@ launchctl list | grep mouse
 
 **正常运行时的输出：**
 ```
-12345   0   com.alexzielenski.mousecloakhelper
+12345   0   com.sdmj76.mousecloakhelper
 ```
 - 第一列：PID（进程 ID）
 - 第二列：退出码（`0` = 正常运行，`78` = 配置错误）
@@ -146,7 +149,7 @@ launchctl list | grep mouse
 
 1. 注销旧的守护进程：
    ```bash
-   launchctl bootout gui/$(id -u)/com.alexzielenski.mousecloakhelper
+   launchctl bootout gui/$(id -u)/com.sdmj76.mousecloakhelper
    ```
 
 2. 等待片刻，验证是否已移除：
