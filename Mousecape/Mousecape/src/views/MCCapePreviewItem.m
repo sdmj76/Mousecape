@@ -29,7 +29,7 @@
         [self.animatingImageView bind:@"shouldFlipHorizontally"
                              toObject:[NSUserDefaults standardUserDefaults]
                           withKeyPath:MCPreferencesHandednessKey
-                              options:nil];
+                              options:@{NSNullPlaceholderBindingOption: @NO}];
     }
 
     return self;
