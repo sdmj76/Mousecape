@@ -100,6 +100,7 @@ struct EditDetailContent: View {
                 .help(localization.localized("Done"))
             }
         }
+        .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
     }
 }
 
@@ -118,10 +119,12 @@ struct EditOverlayView: View {
                 cape: cape,
                 selection: $appState.editingSelectedCursor
             )
+            .scrollContentBackground(.hidden)
             .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 280)
         } detail: {
             // Right side: Content area
             detailContent
+                .scrollContentBackground(.hidden)
         }
         .onAppear {
             // Invalidate cache to ensure we get fresh cursor data
@@ -454,6 +457,7 @@ struct CursorListView: View {
                 }
         }
         .listStyle(.sidebar)
+        .scrollContentBackground(.hidden)
         .id(appState.cursorListRefreshTrigger)  // Force list refresh when trigger changes
     }
 
@@ -898,7 +902,7 @@ struct CursorPreviewDropZone: View {
         }
         .frame(height: 200)
         .frame(maxWidth: .infinity)
-        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
         .contentShape(Rectangle())
         .onTapGesture {
             showFilePicker = true

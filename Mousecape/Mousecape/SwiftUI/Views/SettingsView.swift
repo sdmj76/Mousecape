@@ -22,10 +22,12 @@ struct SettingsView: View {
                     .tag(category)
             }
             .listStyle(.sidebar)
+            .scrollContentBackground(.hidden)
             .navigationSplitViewColumnWidth(min: 150, ideal: 180, max: 220)
         } detail: {
             // Right: Settings content based on selected category
             settingsContent
+                .scrollContentBackground(.hidden)
                 .transition(.opacity.animation(.easeInOut(duration: 0.2)))
         }
         .toolbar {
@@ -38,6 +40,7 @@ struct SettingsView: View {
                 .help("Done")
             }
         }
+        .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
     }
 
     @ViewBuilder
@@ -106,6 +109,7 @@ struct GeneralSettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
         .navigationTitle(localization.localized("General"))
         .onAppear {
             loadCursorScale()
@@ -178,6 +182,7 @@ struct AppearanceSettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
         .navigationTitle(localization.localized("Appearance"))
     }
 }
@@ -258,6 +263,7 @@ struct AdvancedSettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
         .navigationTitle(localization.localized("Advanced"))
     }
 

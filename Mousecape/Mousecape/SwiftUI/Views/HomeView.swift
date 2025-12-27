@@ -122,6 +122,7 @@ struct HomeView: View {
                     CapeIconGridView()
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationSplitViewColumnWidth(min: 200, ideal: 280, max: 400)
         } detail: {
             // Right side: Preview or Edit panel
@@ -147,6 +148,7 @@ struct HomeView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
         }
         .focusedSceneValue(\.selectedCape, $appState.selectedCape)

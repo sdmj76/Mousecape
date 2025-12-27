@@ -38,6 +38,10 @@ struct MousecapeApp: App {
             // Make titlebar transparent
             window.titlebarAppearsTransparent = true
 
+            // Make window background transparent to show desktop wallpaper
+            window.isOpaque = false
+            window.backgroundColor = NSColor.windowBackgroundColor.withAlphaComponent(0.9)
+
             // Disable fullscreen (green) button
             window.collectionBehavior.remove(.fullScreenPrimary)
             if let zoomButton = window.standardWindowButton(.zoomButton) {
