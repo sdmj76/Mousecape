@@ -39,6 +39,15 @@ To build from source, open `Mousecape/Mousecape.xcodeproj` in Xcode:
 - **Standard version**: Select Scheme `Mousecape`
 - **Premium version**: Select Scheme `Mousecape-Dev` (includes Python library for Windows cursor conversion)
 
+### Supported Architectures
+
+| Configuration | Architectures | Description |
+|:--------------|:--------------|:------------|
+| Release | arm64 + x86_64 | Universal Binary, supports Intel and Apple Silicon |
+| Debug | Current arch only | Builds only for the current development machine |
+
+The Release build produces a Universal Binary that runs natively on both Intel and Apple Silicon Macs.
+
 ## Example Cursors
 
 This repository includes an example Kiriko.cape file, available for [download here](Example/local.ArakiCC.Kiriko.cape).
@@ -224,6 +233,15 @@ This is just a tool, and I've polished its UI. But what matters most is your cur
 
 - **普通版**：选择 Scheme `Mousecape`
 - **Premium 版**：选择 Scheme `Mousecape-Dev`（内置 Python 库，支持 Windows 光标转换）
+
+### 支持的架构
+
+| 配置 | 架构 | 说明 |
+|:----|:----|:----|
+| Release | arm64 + x86_64 | Universal Binary，支持 Intel 和 Apple Silicon |
+| Debug | 仅当前架构 | 仅为当前开发机器构建 |
+
+Release 构建会生成 Universal Binary，可在 Intel 和 Apple Silicon Mac 上原生运行。
 
 ## 示例光标
 

@@ -1,0 +1,71 @@
+name: Bug Report / 问题报告
+description: Report a bug or issue / 报告一个 Bug
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! / 感谢你报告问题！
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description / 问题描述
+      description: A clear description of the bug / 清晰描述遇到的问题
+      placeholder: What happened? / 发生了什么？
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce / 复现步骤
+      description: How can we reproduce this bug? / 如何复现这个问题？
+      placeholder: |
+        1. Open Mousecape
+        2. Click on...
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior / 期望行为
+      description: What should have happened? / 应该发生什么？
+    validations:
+      required: true
+
+  - type: dropdown
+    id: macos-version
+    attributes:
+      label: macOS Version / macOS 版本
+      options:
+        - macOS 26 (Tahoe)
+        - macOS 15 (Sequoia)
+        - macOS 14 (Sonoma)
+        - macOS 13 (Ventura)
+        - Other / 其他
+    validations:
+      required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: Mousecape Version / Mousecape 版本
+      placeholder: e.g., v1.0.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / 日志
+      description: Any relevant log output (Console.app) / 相关日志输出
+      render: shell
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots / 截图
+      description: If applicable, add screenshots / 如有必要，添加截图

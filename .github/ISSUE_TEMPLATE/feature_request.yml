@@ -1,0 +1,49 @@
+name: Feature Request / 功能建议
+description: Suggest a new feature / 提出新功能建议
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your feature suggestion! / 感谢你的功能建议！
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / 问题背景
+      description: What problem does this feature solve? / 这个功能解决什么问题？
+      placeholder: I'm frustrated when... / 我在...时感到不便
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution / 建议的解决方案
+      description: How should this feature work? / 这个功能应该如何工作？
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered / 考虑过的替代方案
+      description: Any other solutions you've considered? / 你考虑过其他方案吗？
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority / 优先级
+      options:
+        - Low / 低
+        - Medium / 中
+        - High / 高
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution / 贡献意愿
+      options:
+        - label: I'm willing to submit a PR for this feature / 我愿意为此功能提交 PR
