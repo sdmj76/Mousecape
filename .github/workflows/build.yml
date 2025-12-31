@@ -17,11 +17,11 @@ on:
     inputs:
       configuration:
         description: 'Build configuration'
-        default: 'Release'
+        default: 'Release-Dev'
         type: choice
         options:
-          - Debug
-          - Release
+          - Debug-Dev
+          - Release-Dev
 
 # 并发控制
 concurrency:
@@ -64,7 +64,7 @@ jobs:
         run: |
           xcodebuild -project Mousecape/Mousecape.xcodeproj \
             -scheme Mousecape-Dev \
-            -configuration ${{ github.event.inputs.configuration || 'Release' }} \
+            -configuration ${{ github.event.inputs.configuration || 'Release-Dev' }} \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=YES \
