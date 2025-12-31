@@ -76,9 +76,11 @@ jobs:
           BUILD_DIR=$(find ~/Library/Developer/Xcode/DerivedData -name "Mousecape.app" -type d | head -1)
           if [ -n "$BUILD_DIR" ]; then
             echo "Found app at: $BUILD_DIR"
-            # 创建临时目录存放产物
+            # 使用 ditto 创建 zip 保持 .app 结构
             mkdir -p /tmp/artifact
-            cp -R "$BUILD_DIR" /tmp/artifact/
+            ditto -c -k --keepParent "$BUILD_DIR" /tmp/artifact/Mousecape.app.zip
+            echo "Created zip: /tmp/artifact/Mousecape.app.zip"
+            ls -lh /tmp/artifact/
           else
             echo "Error: Mousecape.app not found"
             find ~/Library/Developer/Xcode/DerivedData -name "*.app" -type d
@@ -89,5 +91,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Mousecape-${{ github.sha }}
-          path: /tmp/artifact/Mousecape.app
+          path: /tmp/artifact/Mousecape.app.zip
           retention-days: 7
