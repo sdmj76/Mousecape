@@ -27,8 +27,7 @@
 		DE525A832EFE93C200A315A3 /* OrderedSetSortedInsert.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE525A7E2EFE93C200A315A3 /* OrderedSetSortedInsert.swift */; };
 		DE525A842EFE93C200A315A3 /* WindowsCursorMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE525A802EFE93C200A315A3 /* WindowsCursorMapping.swift */; };
 		DE525A852EFE93C200A315A3 /* DirectoryLocations.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE525A7D2EFE93C200A315A3 /* DirectoryLocations.swift */; };
-		DE525A8A2EFE93D500A315A3 /* curconvert.py in Resources */ = {isa = PBXBuildFile; fileRef = DE525A872EFE93D500A315A3 /* curconvert.py */; };
-		DE525A8B2EFE93D500A315A3 /* bundle_python.sh in Resources */ = {isa = PBXBuildFile; fileRef = DE525A862EFE93D500A315A3 /* bundle_python.sh */; };
+		DE6B14B42F0512EE00742257 /* WindowsCursorParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE6B14B32F0512EE00742257 /* WindowsCursorParser.swift */; };
 		FA000001UTITYPES00000001 /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA000001UTITYPES00000000 /* UniformTypeIdentifiers.framework */; };
 		FA1DC01919527A73009E879C /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA359844189DBA3800288163 /* SystemConfiguration.framework */; };
 		FA1DC01A19527A79009E879C /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA254779189D85890038E1D9 /* ApplicationServices.framework */; };
@@ -142,8 +141,7 @@
 		DE525A7E2EFE93C200A315A3 /* OrderedSetSortedInsert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderedSetSortedInsert.swift; sourceTree = "<group>"; };
 		DE525A7F2EFE93C200A315A3 /* WindowsCursorConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowsCursorConverter.swift; sourceTree = "<group>"; };
 		DE525A802EFE93C200A315A3 /* WindowsCursorMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowsCursorMapping.swift; sourceTree = "<group>"; };
-		DE525A862EFE93D500A315A3 /* bundle_python.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = bundle_python.sh; sourceTree = "<group>"; };
-		DE525A872EFE93D500A315A3 /* curconvert.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = curconvert.py; sourceTree = "<group>"; };
+		DE6B14B32F0512EE00742257 /* WindowsCursorParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowsCursorParser.swift; sourceTree = "<group>"; };
 		FA000001UTITYPES00000000 /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
 		FA1DC01719527A56009E879C /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		FA254779189D85890038E1D9 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
@@ -304,29 +302,13 @@
 		DE525A812EFE93C200A315A3 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				DE6B14B32F0512EE00742257 /* WindowsCursorParser.swift */,
 				DE525A7D2EFE93C200A315A3 /* DirectoryLocations.swift */,
 				DE525A7E2EFE93C200A315A3 /* OrderedSetSortedInsert.swift */,
 				DE525A7F2EFE93C200A315A3 /* WindowsCursorConverter.swift */,
 				DE525A802EFE93C200A315A3 /* WindowsCursorMapping.swift */,
 			);
 			path = Utilities;
-			sourceTree = "<group>";
-		};
-		DE525A882EFE93D500A315A3 /* Scripts */ = {
-			isa = PBXGroup;
-			children = (
-				DE525A862EFE93D500A315A3 /* bundle_python.sh */,
-				DE525A872EFE93D500A315A3 /* curconvert.py */,
-			);
-			path = Scripts;
-			sourceTree = "<group>";
-		};
-		DE525A892EFE93D500A315A3 /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				DE525A882EFE93D500A315A3 /* Scripts */,
-			);
-			path = Resources;
 			sourceTree = "<group>";
 		};
 		FAC69F58189D603C00BC829D = {
@@ -381,7 +363,6 @@
 		FAC69F6A189D603C00BC829D /* Mousecape */ = {
 			isa = PBXGroup;
 			children = (
-				DE525A892EFE93D500A315A3 /* Resources */,
 				DE3661FB2EFAAAB600D94521 /* SwiftUI */,
 				FA5733A32495667900103FCF /* Mousecape.entitlements */,
 				FAEE650D18A047E8003AA182 /* controllers */,
@@ -532,7 +513,6 @@
 			buildPhases = (
 				FAC69F5D189D603C00BC829D /* Sources */,
 				FAC69F5F189D603C00BC829D /* Resources */,
-				DE525A5E2EFE8FBA00A315A3 /* Bundle Python Environment */,
 				FAC69F5E189D603C00BC829D /* Frameworks */,
 				FA359841189DAAF900288163 /* Build Number */,
 				FAE5D57D1952734F007620DE /* Copy Tool */,
@@ -629,8 +609,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DE525A8A2EFE93D500A315A3 /* curconvert.py in Resources */,
-				DE525A8B2EFE93D500A315A3 /* bundle_python.sh in Resources */,
 				FAC69F7D189D603C00BC829D /* Images.xcassets in Resources */,
 				DE3661FC2EFAAAB600D94521 /* README.md in Resources */,
 			);
@@ -646,25 +624,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		DE525A5E2EFE8FBA00A315A3 /* Bundle Python Environment */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Bundle Python Environment";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# 只在 Dev 配置下执行（Debug-Dev 或 Release-Dev）\nif [ \"$CONFIGURATION\" == \"Debug-Dev\" ] || [ \"$CONFIGURATION\" == \"Release-Dev\" ]; then\n    echo \"Bundling Python environment for Windows cursor import...\"\n    \"${SRCROOT}/Mousecape/Resources/Scripts/bundle_python.sh\"\nfi\n";
-		};
 		FA359841189DAAF900288163 /* Build Number */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -698,6 +657,7 @@
 				DE525A842EFE93C200A315A3 /* WindowsCursorMapping.swift in Sources */,
 				DE525A852EFE93C200A315A3 /* DirectoryLocations.swift in Sources */,
 				FAAEF950189EFC9800145DF8 /* apply.m in Sources */,
+				DE6B14B42F0512EE00742257 /* WindowsCursorParser.swift in Sources */,
 				FAEE653218A047E8003AA182 /* MCCursor.m in Sources */,
 				FAAEF958189F4F8200145DF8 /* scale.m in Sources */,
 				DE3661FD2EFAAAB600D94521 /* MainView.swift in Sources */,

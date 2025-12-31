@@ -648,7 +648,6 @@ final class AppState: @unchecked Sendable {
 
     // MARK: - Windows Cursor Import
 
-    #if ENABLE_WINDOWS_IMPORT
     /// Standard cursor size for 2x HiDPI (64x64 pixels = 32x32 points)
     private let standardCursorSize: Int = 64
 
@@ -956,7 +955,6 @@ final class AppState: @unchecked Sendable {
 
         return filtered
     }
-    #endif
 }
 
 // MARK: - AppState Singleton

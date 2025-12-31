@@ -13,11 +13,8 @@ Mousecape 是一款免费的 macOS 光标管理器，使用私有 CoreGraphics A
 在 Xcode 中打开 `Mousecape/Mousecape.xcodeproj`：
 
 ```bash
-# 构建所有目标（标准版）
+# 构建应用
 xcodebuild -project Mousecape/Mousecape.xcodeproj -scheme Mousecape build
-
-# 构建高级版（包含用于 Windows 光标转换的 Python）
-xcodebuild -project Mousecape/Mousecape.xcodeproj -scheme Mousecape-Dev build
 
 # 构建特定目标
 xcodebuild -project Mousecape/Mousecape.xcodeproj -target mousecloak build
@@ -107,12 +104,12 @@ Cape 是二进制 plist 文件（`.cape` 扩展名），包含：
 
 **Cape 库位置：** `~/Library/Application Support/Mousecape/capes/`
 
-## Windows 光标转换（仅限高级版）
+## Windows 光标转换
 
-在 `Mousecape-Dev` 方案中可用，包含打包的 Python：
-- `WindowsCursorConverter.swift` - 调用 Python 脚本进行 .cur/.ani 转换
+使用原生 Swift 实现，无需外部依赖：
+- `WindowsCursorParser.swift` - 原生 Swift 解析器，支持 .cur/.ani 格式
+- `WindowsCursorConverter.swift` - 转换器，将解析结果转为 Mousecape 格式
 - `WindowsCursorMapping.swift` - 将 Windows 光标名称映射到 macOS 标识符
-- 需要 `ENABLE_WINDOWS_IMPORT` 编译器标志
 
 ## 外部依赖
 
@@ -130,4 +127,4 @@ IBeam（文本光标）也有替代名称。守护进程会处理这些变体。
 ## 调试
 
 - `MMLog()` 宏用于彩色控制台输出（定义在 mousecloak 中）
-- 构建变体：Debug、Release、Debug-Dev、Release-Dev
+- 构建变体：Debug、Release

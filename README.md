@@ -22,9 +22,6 @@ Built with SwiftUI, fully adapted to Liquid Glass design language, with complete
 
 - Customize Mac system cursors, supporting both static and animated cursors
 - One-click import of Windows cursor formats (.cur / .ani)
-
-> Requires downloading the **premium** version, provided for free. The difference from the standard version is the built-in Python library for cursor conversion.
-
 - Uses private, non-intrusive CoreGraphics API, safe and reliable
 - Runs silently in the background without interfering with the system
 
@@ -34,10 +31,7 @@ Download the latest version from the [Releases](https://github.com/sdmj76/Mousec
 
 ### Build from Source
 
-To build from source, open `Mousecape/Mousecape.xcodeproj` in Xcode:
-
-- **Standard version**: Select Scheme `Mousecape`
-- **Premium version**: Select Scheme `Mousecape-Dev` (includes Python library for Windows cursor conversion)
+To build from source, open `Mousecape/Mousecape.xcodeproj` in Xcode and select Scheme `Mousecape`.
 
 ### Supported Architectures
 
@@ -217,9 +211,6 @@ This is just a tool, and I've polished its UI. But what matters most is your cur
 
 - 自定义 Mac 系统光标，支持静态和动画光标
 - 一键导入 Windows 格式指针（.cur / .ani）
-
-> 需要下载 **premium** 版本，免费提供。与标准版区别是内置python库，用于转换光标
-
 - 使用私有、非侵入式的 CoreGraphics API，安全可靠
 - 后台静默运行，不干扰系统
 
@@ -229,10 +220,7 @@ This is just a tool, and I've polished its UI. But what matters most is your cur
 
 ### 自行构建
 
-如需自行构建，请在 Xcode 中打开 `Mousecape/Mousecape.xcodeproj`：
-
-- **普通版**：选择 Scheme `Mousecape`
-- **Premium 版**：选择 Scheme `Mousecape-Dev`（内置 Python 库，支持 Windows 光标转换）
+如需自行构建，请在 Xcode 中打开 `Mousecape/Mousecape.xcodeproj`，选择 Scheme `Mousecape` 构建。
 
 ### 支持的架构
 

@@ -29,12 +29,10 @@ struct HomeView: View {
                 Button(localization.localized("New Cape")) {
                     appState.createNewCape()
                 }
-                #if ENABLE_WINDOWS_IMPORT
                 Divider()
                 Button(localization.localized("Import from Windows Cursors...")) {
                     appState.importWindowsCursorFolder()
                 }
-                #endif
             } label: {
                 Image(systemName: "plus")
             }

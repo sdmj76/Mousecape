@@ -4,69 +4,41 @@
 
 ## English
 
-> **Important:** This version requires **macOS Tahoe (26)** or later. Earlier versions of macOS are not supported.
+### v1.0.1 - Native Windows Cursor Conversion
 
-### UI
+**Major Update: Windows cursor conversion rewritten from Python to native Swift**
 
-- Completely rebuilt the interface using **SwiftUI**, fully embracing the new Liquid Glass design language
-- Added **enlarged cursor preview** on the home screen for better visibility
-- Replaced TabView with **page-based navigation** and improved toolbar layout
-- Full **Dark Mode** support with automatic system appearance switching
-- Added **localization support** with Chinese language option
+- Replaced external Python script with pure Swift implementation
+- No longer requires bundled Python runtime
+- Significantly reduced app size (from ~50MB to ~5MB)
+- Faster conversion speed with optimized performance
+- Improved parsing reliability for .cur and .ani formats
 
-### Features
+**Bug Fixes:**
 
-- **Windows cursor import** (Premium version only): One-click import from Windows cursor files
-  - Supports `.cur` (static) and `.ani` (animated) formats
-  - Automatically detects frame count and imports hotspot information
+- Fixed memory alignment crash when parsing certain cursor files
+- Fixed cape rename error when saving imported cursors
 
->*Premium version is free, but has a larger file size due to bundled Python libraries*
-
-- Unified cursor size to **64px × 64px** for consistency
-- Updated CoreGraphics API for **macOS Tahoe** compatibility
-- Improved helper daemon with better session change handling
-
-### Other
-
-- Removed Sparkle update framework (updates now via GitHub Releases)
-- Cleaned up legacy Objective-C code and unused assets
-- Fixed multiple UI display and preview issues
-- Fixed edit function stability
-- Security vulnerability fixes
+---
 
 <a id="中文"></a>
 
 ## 中文
 
-> **重要提示：** 此版本需要 **macOS Tahoe (26)** 或更高版本。不支持更早的 macOS 版本。
+### v1.0.1 - 原生 Windows 光标转换
 
-### 界面
+**重大更新：Windows 光标转换从 Python 重写为原生 Swift**
 
-- 使用 **SwiftUI** 完全重写界面，全面适配全新的液态玻璃设计语言
-- 主页新增**放大光标预览**功能，预览更清晰
-- 使用**分页式导航**替代 TabView，优化工具栏布局
-- 完整支持**深色模式**，自动跟随系统外观切换
-- 新增**本地化支持**，支持中文界面
+- 使用纯 Swift 实现替代外挂 Python 脚本
+- 不再需要内置 Python 运行时
+- 大幅减小应用体积（从约 50MB 降至约 5MB）
+- 优化性能，转换速度更快
+- 提升 .cur 和 .ani 格式的解析可靠性
 
-### 功能
+**Bug 修复：**
 
-- **Windows 光标导入**（仅限 Premium 版本）：一键从 Windows 光标文件导入
-  - 支持 `.cur`（静态）和 `.ani`（动态）格式
-  - 自动识别帧数并导入热点信息
-
-> *Premium 版本免费，但因内置 Python 库导致文件体积较大*
-
-- 光标尺寸统一为 **64px × 64px**，保持一致性
-- 更新 CoreGraphics API 以支持 **macOS Tahoe**
-- 改进守护进程，优化会话变化处理
-
-### 其他
-
-- 移除 Sparkle 更新框架（现通过 GitHub Releases 更新）
-- 清理遗留的 Objective-C 代码和未使用的资源
-- 修复多个界面显示和预览问题
-- 修复编辑功能稳定性问题
-- 安全漏洞修复
+- 修复解析某些光标文件时的内存对齐崩溃问题
+- 修复导入光标保存时的 cape 重命名错误
 
 ---
 
